@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Voicemails - VoiceCare Pro{% endblock %}
+
+{% block meta_refresh %}
+<meta http-equiv="refresh" content="10">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>
+            <i class="fas fa-inbox me-2"></i>
+            Voicemail Inbox
+        </h3>
+
+        <!-- Department Filter -->
+        <form method="get" class="d-flex">
+            <select name="department" class="form-select me-2" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                <option value="front_desk" {{ 'selected' if request.args.get('department') == 'front_desk' }}>
+                    Front Desk
+                </option>
+                <option value="billing" {{ 'selected' if request.args.get('department') == 'billing' }}>
+                    Billing
+                </option>
+                <option value="clinical" {{ 'selected' if request.args.get('department') == 'clinical' }}>
+                    Clinical
+                </option>
+                <option value="admin" {{ 'selected' if request.args.get('department') == 'admin' }}>
+                    Admin
+                </option>
+            </select>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+
+            <thead class="table-light">
+                <tr>
+                    <th>File</th>
+                    <th>Status</th>
+                    <th>Intent</th>
+                    <th>Department</th>
+                    <th>Priority</th>
+                    <th>Confidence</th>
+                    <th>Needs Review</th>
+                    <th>Received</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for vm in voicemails %}
+                <tr class="{% if vm[7] == 1 %}table-warning{% endif %}">
+
+                    <!-- Filename -->
+                    <td>
+                        <i class="fas fa-file-audio text-primary me-1"></i>
+                        {{ vm[1] }}
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td>
+                        {% if vm[2] == "received" %}
+                            <span class="badge bg-secondary">Received</span>
+
+                        {% elif vm[2] == "transcribing" %}
+                            <span class="badge bg-primary">
+                                <i class="spinner-border spinner-border-sm me-1"></i>
+                                Transcribing
+                            </span>
+
+                        {% elif vm[2] == "transcribed" %}
+                            <span class="badge bg-success">Transcribed</span>
+
+                        {% elif vm[2] == "needs_review" %}
+                            <span class="badge bg-warning text-dark">Needs Review</span>
+
+                        {% elif vm[2] == "failed" %}
+                            <span class="badge bg-danger">Failed</span>
+
+                        {% else %}
+                            <span class="badge bg-dark">{{ vm[2] }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Intent -->
+                    <td>
+                        <span class="badge bg-info text-dark">
+                            {{ vm[3] }}
+                        </span>
+                    </td>
+
+                    <!-- Department -->
+                    <td>
+                        {% if vm[4] == 'front_desk' %}
+                            <span class="badge bg-primary">Front Desk</span>
+                        {% elif vm[4] == 'billing' %}
+                            <span class="badge bg-success">Billing</span>
+                        {% elif vm[4] == 'clinical' %}
+                            <span class="badge bg-danger">Clinical</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Admin</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Priority -->
+                    <td>
+                        {% if vm[5] == 'high' %}
+                            <span class="badge bg-danger">High</span>
+                        {% elif vm[5] == 'medium' %}
+                            <span class="badge bg-warning text-dark">Medium</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Low</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Confidence -->
+                    <td>
+                        {{ (vm[6] * 100) | round(1) }}%
+                    </td>
+
+                    <!-- Needs Review -->
+                    <td>
+                        {% if vm[7] == 1 %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Yes
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>
+                                No
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Timestamp -->
+                    <td>
+                        {{ vm[8].strftime("%Y-%m-%d %H:%M") if vm[8] }}
+                        <br>
+                        <small class="text-muted">Received</small>
+                    </td>
+
+                    <!-- Review Button -->
+                    <td>
+                        <a href="{{ url_for('voicemail_detail', voicemail_id=vm[0]) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            Review
+                        </a>
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        No voicemails found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voicemail Uploaded - VoiceCare Pro</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f8ff;
+            color: #333;
+        }
+
+        /* Top Blue Bar */
+        .navbar {
+            width: 100%;
+            background: linear-gradient(90deg, #2a5298, #1e3c72);
+            padding: 15px 25px;
+            color: #fff;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Full height layout */
+        .container-full {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 60px);
+            padding: 30px;
+        }
+
+        /* Card Style */
+        .card {
+            max-width: 700px;
+            width: 100%;
+            background: #fff;
+            border-radius: 18px;
+            padding: 40px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #1e3c72;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .card p {
+            margin-bottom: 25px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Audio Player */
+        audio {
+            width: 100%;
+            margin: 20px 0;
+            outline: none;
+        }
+
+        /* Gradient Button */
+        .btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #36d1dc, #5b86e5);
+            color: #fff;
+            padding: 14px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 16px rgba(91,134,229,0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(91,134,229,0.55);
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Blue Bar -->
+    <div class="navbar">
+        VoiceCare Pro
+    </div>
+
+    <!-- Center Card -->
+    <div class="container-full">
+        <div class="card">
+            <h2>✅ Voicemail Uploaded Successfully!</h2>
+            <p>Your voicemail has been saved. You can listen to it below:</p>
+
+            <audio controls>
+                <source src="{{ url_for('uploaded_file', filename=filename) }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+
+            <br><br>
+            <a href="{{ url_for('upload_file') }}" class="btn">⬅ Back to Dashboard</a>
+
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

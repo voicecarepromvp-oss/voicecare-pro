@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voicemail {{ voicemail.id }}</title>
+</head>
+<body>
+
+<h2>📞 Voicemail #{{ voicemail.id }}</h2>
+
+{% if request.args.get('saved') %}
+    <p style="color:green; font-weight:bold;">
+        ✅ Override saved successfully
+    </p>
+{% endif %}
+
+<p><strong>Transcript:</strong></p>
+<pre>{{ voicemail.transcript }}</pre>
+
+<p><strong>AI Decision:</strong></p>
+<ul>
+    <li>Intent: {{ voicemail.intent }}</li>
+    <li>Department: {{ voicemail.department }}</li>
+    <li>Priority: {{ voicemail.priority }}</li>
+    <li>Confidence: {{ "%.2f"|format(voicemail.confidence or 0) }}</li>
+</ul>
+
+<h3>🧑‍⚕️ Human Override</h3>
+
+<form method="POST"
+      action="{{ url_for('admin_voicemail_override', id=voicemail.id) }}">
+
+    <label>Department:</label>
+    <input name="department" value="{{ voicemail.department }}">
+
+    <br><br>
+
+    <label>Priority:</label>
+    <select name="priority">
+        <option {% if voicemail.priority == 'low' %}selected{% endif %}>low</option>
+        <option {% if voicemail.priority == 'normal' %}selected{% endif %}>normal</option>
+        <option {% if voicemail.priority == 'high' %}selected{% endif %}>high</option>
+        <option {% if voicemail.priority == 'urgent' %}selected{% endif %}>urgent</option>
+    </select>
+
+    <br><br>
+
+    <button type="submit">Save Override</button>
+</form>
+
+</body>
+</html>

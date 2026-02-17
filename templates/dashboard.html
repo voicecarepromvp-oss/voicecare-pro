@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Healthcare Voicemail Manager{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="jumbotron bg-gradient-primary text-white rounded p-4">
+            <h1 class="display-6">
+                <i class="fas fa-heartbeat me-3"></i>
+                Welcome to HealthVoice MVP
+            </h1>
+            <p class="lead mb-3">
+                Streamline your healthcare voicemail management with AI-powered transcription and smart data extraction.
+            </p>
+            <a class="btn btn-light btn-lg" href="{{ url_for('ingestion.ingest_voicemail') }}">
+                <i class="fas fa-upload me-2"></i>
+                Upload First Voicemail
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- MONTHLY USAGE CARD -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">📊 Monthly Usage</h5>
+
+    <p><strong>Plan:</strong> {{ usage.plan|capitalize }}</p>
+    <p><strong>Voicemails Used:</strong> {{ usage.used }} / {{ usage.limit }}</p>
+    <p><strong>Remaining:</strong> {{ usage.remaining }}</p>
+    <p><strong>Billing Cycle:</strong> {{ usage.cycle_start }} → {{ usage.cycle_end }}</p>
+
+    {% if usage.overage > 0 %}
+      <p class="text-danger">
+        ⚠️ Overages this cycle: {{ usage.overage }}
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-file-audio fa-3x text-primary mb-3"></i>
+                <h4 class="card-title">{{ total_voicemails }}</h4>
+                <p class="card-text text-muted">Total Voicemails</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                <h4 class="card-title">{{ pending_processing }}</h4>
+                <p class="card-text text-muted">Pending Processing</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h4 class="card-title">{{ processed_today }}</h4>
+                <p class="card-text text-muted">Processed Today</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-route fa-3x text-info mb-3"></i>
+                <h4 class="card-title">{{ auto_routed }}</h4>
+                <p class="card-text text-muted">Auto-Routed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Voicemails
+                </h5>
+                <small class="text-muted">Last 24 hours</small>
+            </div>
+            <div class="card-body">
+
+                {% if voicemails %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Caller</th>
+                                <th>Phone</th>
+                                <th>Reason</th>
+                                <th>Urgency</th>
+                                <th>Department</th>
+                                <th>Received</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in voicemails %}
+                            <tr class="{% if v.status == 'needs_review' %}table-warning{% endif %}">
+                                <td>{{ v.id }}</td>
+                                <td>
+                                    <span class="status {{ v.status }}">
+                                        {{ v.status|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ v.caller_name }}</td>
+                                <td>{{ v.phone }}</td>
+                                <td>{{ v.reason }}</td>
+                                <td>{{ v.urgency }}</td>
+                                <td>{{ v.department }}</td>
+                                <td>{{ v.received_at }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <h6 class="text-muted">No voicemails yet</h6>
+                    <p class="text-muted">
+                        Upload your first voicemail to get started with AI processing.
+                    </p>
+                    <a href="{{ url_for('ingestion.ingest_voicemail') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Upload Voicemail
+                    </a>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('ingestion.ingest_voicemail') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload Voicemail
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>AI Transcription</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Data Extraction</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Email Notifications</span>
+                    <span class="badge bg-warning">Pending</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Smart Routing</span>
+                    <span class="badge bg-warning">Pending</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

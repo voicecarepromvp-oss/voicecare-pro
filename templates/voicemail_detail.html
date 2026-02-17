@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Voicemail Review{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+    <div class="card shadow mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-headphones me-2"></i>
+          Voicemail Review
+        </h5>
+      </div>
+
+      <div class="card-body">
+
+        <!-- Basic Info -->
+        <p>
+          <strong>Filename:</strong>
+          {{ voicemail[1] }}
+        </p>
+
+        <p>
+          <strong>AI Intent:</strong>
+          <span class="badge bg-info text-dark">
+            {{ voicemail[3] or "Unknown" }}
+          </span>
+        </p>
+
+        <p>
+          <strong>Confidence:</strong>
+          {{ (voicemail[6] * 100)|round(1) if voicemail[6] else "N/A" }}%
+        </p>
+
+        {% if voicemail[7] == 1 %}
+          <div class="alert alert-warning mt-3">
+            ⚠️ <strong>AI flagged this voicemail for human review</strong>
+          </div>
+        {% endif %}
+
+        <hr>
+
+        <!-- Transcript -->
+        <h6>Transcript</h6>
+
+        {% if voicemail[6] %}
+          <small class="text-muted d-block mb-2">
+            Confidence: {{ (voicemail[6] * 100) | round(1) }}%
+          </small>
+        {% endif %}
+
+        <div class="border rounded p-3 bg-light mb-4" style="white-space: pre-wrap;">
+          {{ voicemail[2] }}
+        </div>
+
+        <!-- ✅ TRIAGE DISPLAY (NEW) -->
+        {% if voicemail.triage_card %}
+          <hr>
+
+          <h6>Triage Summary</h6>
+
+          <p>
+            <strong>Urgency:</strong>
+            {% if voicemail.triage_card.urgency == 'urgent' %}
+              <span class="badge bg-danger">URGENT</span>
+            {% else %}
+              <span class="badge bg-success">Non-Urgent</span>
+            {% endif %}
+          </p>
+
+          <p>
+            <strong>Summary:</strong>
+            {{ voicemail.triage_card.summary }}
+          </p>
+        {% endif %}
+
+        <hr>
+
+        <!-- Human Override Form -->
+        <form method="POST">
+          <div class="row">
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Intent</label>
+              <input
+                type="text"
+                name="intent"
+                class="form-control"
+                value="{{ voicemail[3] }}"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Department</label>
+              <select name="department" class="form-select">
+                <option value="front_desk" {% if voicemail[4]=="front_desk" %}selected{% endif %}>
+                  Scheduling
+                </option>
+                <option value="billing" {% if voicemail[4]=="billing" %}selected{% endif %}>
+                  Billing
+                </option>
+                <option value="clinical" {% if voicemail[4]=="clinical" %}selected{% endif %}>
+                  Clinical
+                </option>
+                <option value="general" {% if voicemail[4]=="general" %}selected{% endif %}>
+                  General
+                </option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="form-check mt-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              name="reviewed"
+              {% if voicemail[7] == 0 %}checked{% endif %}
+            >
+            <label class="form-check-label">
+              Mark as Reviewed
+            </label>
+          </div>
+
+          <div class="mt-4 text-end">
+            <a href="{{ url_for('voicemails') }}" class="btn btn-secondary">
+              Back
+            </a>
+            <button type="submit" class="btn btn-primary">
+              Save Changes
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
