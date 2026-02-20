@@ -2,9 +2,10 @@ from services.transcription_status import update_voicemail_status
 from database import db, Voicemail
 
 import os
-import time
 import json
 import logging
+
+from services.storage_service import generate_presigned_url
 
 
 # ✅ Retry Error Classifier
@@ -24,49 +25,44 @@ class VoicemailAIProcessor:
     """Handle AI processing of voicemails with robust error handling"""
 
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv('DEEPGRAM_API_KEY')
+        self.api_key = api_key or os.getenv("DEEPGRAM_API_KEY")
+        if not self.api_key:
+            raise ValueError("DEEPGRAM_API_KEY not found in environment")
 
     # ============================================================
-    # TRANSCRIPTION
+    # ✅ TRANSCRIPTION (DEEPGRAM v5 - nova-2-medical)
     # ============================================================
 
-    def transcribe_audio(self, file_path):
-        """Transcribe audio using Deepgram"""
-        try:
-            from deepgram import Deepgram
+    def transcribe_audio(self, s3_key):
+        """
+        Transcribe audio from S3 using Deepgram v5
+        Returns: (transcript, confidence)
+        """
 
-            dg = Deepgram(self.api_key)
+        from deepgram import DeepgramClient
 
-            with open(file_path, "rb") as audio:
-                source = {"buffer": audio, "mimetype": "audio/wav"}
+        client = DeepgramClient(self.api_key)
 
-                options = {
-                    "model": "nova-2-medical",
-                    "punctuate": True,
-                    "diarize": False,
-                    "smart_format": True,
-                    "language": "en"
-                }
+        # Generate temporary presigned S3 URL (1 hour lifetime)
+        audio_url = generate_presigned_url(s3_key)
 
-                response = dg.transcription.sync_prerecorded(source, options)
+        options = {
+            "model": "nova-2-medical",
+            "punctuate": True,
+            "diarize": False,
+            "smart_format": True,
+            "language": "en"
+        }
 
-            transcript = response["results"]["channels"][0]["alternatives"][0]["transcript"]
-            confidence = response["results"]["channels"][0]["alternatives"][0].get("confidence", 0.85)
+        response = client.listen.prerecorded.v("1").transcribe_url(
+            {"url": audio_url},
+            options
+        )
 
-            return {
-                "success": True,
-                "transcription": transcript,
-                "confidence": confidence,
-                "language": "en"
-            }
+        transcript = response.results.channels[0].alternatives[0].transcript
+        confidence = response.results.channels[0].alternatives[0].confidence
 
-        except Exception as e:
-            logging.error(f"Transcription error: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "transcription": None
-            }
+        return transcript, confidence
 
     # ============================================================
     # PATIENT INFO EXTRACTION
@@ -91,6 +87,7 @@ class VoicemailAIProcessor:
 
             from openai import OpenAI
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
@@ -100,7 +97,6 @@ class VoicemailAIProcessor:
 
             result_text = response.choices[0].message.content.strip()
 
-            # ✅ Safe JSON parse
             try:
                 result = json.loads(result_text)
             except Exception:
@@ -127,7 +123,7 @@ class VoicemailAIProcessor:
             }
 
     # ============================================================
-    # SUMMARY + TRIAGE (OPENAI)
+    # SUMMARY + TRIAGE
     # ============================================================
 
     def summarize_and_triage(self, transcription, patient_info):
@@ -155,6 +151,7 @@ class VoicemailAIProcessor:
 
             from openai import OpenAI
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
@@ -165,11 +162,10 @@ class VoicemailAIProcessor:
             raw_text = response.choices[0].message.content.strip()
             logging.info(f"📄 RAW OpenAI response: {raw_text}")
 
-            # ✅ Safe JSON parse
             try:
                 result = json.loads(raw_text)
             except Exception:
-                logging.warning(f"Triage JSON parse failed. Marking needs_review. Raw: {raw_text}")
+                logging.warning("Triage JSON parse failed. Marking needs_review.")
                 result = {
                     "summary": "Error processing voicemail",
                     "urgency_level": "medium",
@@ -199,7 +195,7 @@ class VoicemailAIProcessor:
     # COMPLETE PIPELINE
     # ============================================================
 
-    def process_voicemail_complete(self, voicemail, file_path):
+    def process_voicemail_complete(self, voicemail, s3_key):
         """Complete AI processing pipeline with safe DB commit"""
 
         results = {
@@ -214,45 +210,30 @@ class VoicemailAIProcessor:
 
             update_voicemail_status(voicemail.id, "transcribing")
 
-            transcription_result = self.transcribe_audio(file_path)
-            results['transcription_result'] = transcription_result
+            transcript, confidence = self.transcribe_audio(s3_key)
 
-            if not transcription_result['success']:
-                update_voicemail_status(
-                    voicemail.id,
-                    "failed",
-                    failure_reason=transcription_result.get("error")
-                )
-                return results
+            results['transcription_result'] = {
+                "transcription": transcript,
+                "confidence": confidence
+            }
 
-            transcription = transcription_result['transcription']
-            confidence = transcription_result.get("confidence", 1.0)
-
-            patient_info = self.extract_patient_info(transcription)
+            patient_info = self.extract_patient_info(transcript)
             results['patient_info'] = patient_info
 
-            triage_result = self.summarize_and_triage(transcription, patient_info)
+            triage_result = self.summarize_and_triage(transcript, patient_info)
             results['triage_result'] = triage_result
 
-            # ✅ Update voicemail fields
-            voicemail.transcript = transcription
+            voicemail.transcript = transcript
             voicemail.transcription_confidence = confidence
-            voicemail.transcription_provider = "deepgram"
+            voicemail.transcription_provider = "deepgram_v5"
 
             if triage_result.get("success"):
                 voicemail.summary = triage_result.get("summary")
                 voicemail.triage_category = triage_result.get("department_routing")
                 voicemail.urgency_level = triage_result.get("urgency_level")
 
-            try:
-                db.session.commit()
-            except Exception as e:
-                logging.error(f"DB commit failed: {e}. Rolling back session.")
-                db.session.rollback()
-                update_voicemail_status(voicemail.id, "needs_review")
-                return results
+            db.session.commit()
 
-            # Final status
             if confidence < 0.75 or not triage_result.get("success"):
                 update_voicemail_status(voicemail.id, "needs_review")
             else:

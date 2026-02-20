@@ -1,73 +1,60 @@
-import logging
-import time  # ✅ CRITICAL FIX
-from run import app  # Needed for Flask app context
+import time
+import asyncio  # ✅ Added as per mentor instruction
+from datetime import datetime
+from database import db, Voicemail
+from utils.ai_processor import VoicemailAIProcessor
+from deepgram import DeepgramClient, PrerecordedOptions
 
-# ✅ Updated imports per task
-from services.triage_service import extract_triage
-from database import db, Voicemail, Clinic, TriageCard
+def get_next_voicemail():
+    return (
+        db.session.query(Voicemail)
+        .filter_by(status="received")
+        .order_by(Voicemail.id.asc())
+        .first()
+    )
 
-logging.basicConfig(level=logging.INFO)
 
+def worker_loop():
+    ai_processor = VoicemailAIProcessor()
 
-# ------------------------
-# WORKER LOOP
-# ------------------------
+    print("🚀 Worker loop running...")
 
-def worker():
-    """Main background worker loop."""
-    with app.app_context():
-        print("🔥 Worker loop starting with Flask app context...")
+    while True:
+        voicemail = get_next_voicemail()
 
-        while True:
-            try:
-                # ✅ Fetch completed voicemails
-                voicemails = Voicemail.query.filter_by(status="completed").all()
+        if not voicemail:
+            time.sleep(2)
+            continue
 
-                print(f"DEBUG: Found {len(voicemails)} completed voicemails")
+        print(f"🎧 Found voicemail ID {voicemail.id}")
 
-                processed_count = 0
+        try:
+            # Step 1: Mark as transcribing
+            voicemail.status = "transcribing"
+            db.session.commit()
 
-                for v in voicemails:
+            # Step 2: Transcribe (S3 key stored in audio_url)
+            transcript, confidence = ai_processor.transcribe_audio(
+                voicemail.audio_url
+            )
 
-                    # ✅ PREVENT REPROCESSING (Task Requirement)
-                    existing = TriageCard.query.filter_by(
-                        voicemail_id=v.id
-                    ).first()
+            # Step 3: Save transcript
+            voicemail.transcript = transcript
+            voicemail.transcription_confidence = confidence
+            voicemail.transcribed_at = datetime.utcnow()
 
-                    if existing:
-                        # Already triaged → skip
-                        continue
+            # Step 4: Move to next stage
+            voicemail.status = "extracting"
+            db.session.commit()
 
-                    # ✅ Skip if no transcript
-                    if not v.transcript:
-                        logging.warning(
-                            f"Voicemail {v.id} has no transcript. Skipping."
-                        )
-                        continue
+            print(f"✅ Completed voicemail {voicemail.id}")
 
-                    # ✅ Run triage
-                    triage_data = extract_triage(v.transcript)
+        except Exception as e:
+            print(f"❌ Error processing voicemail {voicemail.id}: {e}")
 
-                    triage = TriageCard(
-                        voicemail_id=v.id,
-                        clinic_id=v.clinic_id,
-                        summary=triage_data["summary"],
-                        urgency=triage_data["urgency"],
-                        crisis_flag=triage_data["crisis_flag"],
-                        needs_review=triage_data["needs_review"]
-                    )
+            voicemail.status = "failed"
+            voicemail.failure_reason = str(e)
+            voicemail.last_error_at = datetime.utcnow()
+            db.session.commit()
 
-                    db.session.add(triage)
-                    processed_count += 1
-
-                db.session.commit()
-
-                if processed_count > 0:
-                    print(f"✅ Triage completed for {processed_count} voicemails")
-
-            except Exception as e:
-                db.session.rollback()
-                logging.error(f"❌ Worker loop error: {e}")
-
-            # ✅ VERY IMPORTANT (CRITICAL FIX)
-            time.sleep(5)
+        time.sleep(1)

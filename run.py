@@ -28,9 +28,7 @@ from services.digest_service import send_daily_digest
 def get_clinic_usage(clinic):
     plan = PLANS.get(clinic.plan_name, PLANS["starter"])
     limit = plan["monthly_limit"]
-
     remaining = None if limit is None else max(limit - clinic.monthly_voicemail_used, 0)
-
     return {
         "plan": plan["name"],
         "used": clinic.monthly_voicemail_used,
@@ -60,7 +58,8 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash
+    flash,
+    jsonify
 )
 
 from werkzeug.utils import secure_filename
@@ -70,7 +69,9 @@ from werkzeug.utils import secure_filename
 # ------------------------
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)
+import os
+
+app.secret_key = os.getenv("SECRET_KEY")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -92,7 +93,9 @@ login_manager.init_app(app)
 # DATABASE
 # ------------------------
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///voicecare.db"
+import os
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 from database import db, User, Voicemail, Clinic, TriageCard
@@ -155,13 +158,12 @@ def run_ai_pipeline(v, file_path):
 
         except Exception as e:
             logger.error(f"AI pipeline attempt {attempt+1} failed: {e}")
-
             if attempt == 2:
                 v.update_status("failed", failure_reason=str(e))
                 raise
 
 # ------------------------
-# ✅ UPDATED SCHEDULER FUNCTION (FIXED)
+# SCHEDULER
 # ------------------------
 
 def start_scheduler(app):
@@ -171,25 +173,16 @@ def start_scheduler(app):
     def daily_digest():
         with app.app_context():
             clinics = Clinic.query.all()
-
             for clinic in clinics:
-
-                # ✅ STEP 1 — GET ONLY UNSENT TRIAGE CARDS (UPDATED)
                 triage_cards = TriageCard.query.filter(
                     TriageCard.clinic_id == clinic.id,
                     TriageCard.digest_sent_at.is_(None)
                 ).all()
-
                 if not triage_cards:
                     continue
-
-                # STEP 2 — Build + Send Digest
                 send_daily_digest(clinic)
-
-                # STEP 3 — Mark cards as sent with timestamp (UPDATED)
                 for card in triage_cards:
                     card.digest_sent_at = datetime.utcnow()
-
                 db.session.commit()
 
     scheduler.start()
@@ -210,15 +203,11 @@ def login():
     if request.method == "POST":
         email = request.form.get("email") or request.form.get("username")
         password = request.form.get("password")
-
         user = User.query.filter_by(email=email).first()
-
         if not user or not user.check_password(password):
             return render_template("login.html", error="Invalid credentials")
-
         login_user(user, remember=True)
         return redirect(url_for("dashboard"))
-
     return render_template("login.html")
 
 @app.route("/logout")
@@ -233,9 +222,56 @@ def test_digest():
     clinic = Clinic.query.first()
     if not clinic:
         return "No clinic found"
-
     send_daily_digest(clinic)
     return "Digest triggered"
+
+# ------------------------
+# 🚀 UPLOAD VOICEMAIL ENDPOINT (TEMP LOCAL TEST VERSION)
+# ------------------------
+
+from services.storage_service import upload_file
+
+@app.route("/upload", methods=["POST"])
+def upload_voicemail():
+    """Temporary version for local testing without login"""
+    from datetime import datetime
+    from database import db
+    from database import Voicemail
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    # --------------------------
+    # Temporary fix for local testing
+    # --------------------------
+    clinic_id = 1  # use a real clinic ID from your DB
+
+    # Upload file to S3 (or mock function for testing)
+    s3_key = upload_file(file)
+
+    # Save voicemail    record in DB
+    voicemail = Voicemail(
+        clinic_id=clinic_id,
+        filename=file.filename,
+        audio_url=s3_key,
+        source="clinic_upload",
+        received_at=datetime.utcnow(),
+        status="received"  # worker will pick this up
+    )
+
+    db.session.add(voicemail)
+    db.session.commit()
+
+    return jsonify({"success": True, "voicemail_id": voicemail.id}), 201
+
+# ------------------------
+# DASHBOARD
+# ------------------------
 
 @app.route("/dashboard")
 @login_required
@@ -252,12 +288,10 @@ def dashboard():
     usage_status = get_clinic_usage_status(clinic)
 
     total_voicemails = len(voicemails)
-
     pending_processing = Voicemail.query.filter_by(
         clinic_id=current_user.clinic_id,
         transcript=None
     ).count()
-
     processed_today = Voicemail.query.filter(
         Voicemail.clinic_id == current_user.clinic_id,
         Voicemail.transcript.isnot(None),
@@ -276,21 +310,13 @@ def dashboard():
     )
 
 # ------------------------
-# RUN + WORKER + SCHEDULER
+# RUN
 # ------------------------
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        start_scheduler(app)
 
-    start_scheduler(app)
-
-    import threading
-    from workers.transcription_worker import worker
-
-    thread = threading.Thread(target=worker, daemon=True)
-    thread.start()
-
-    print("🔥 transcription worker started")
-
-    app.run(debug=False, use_reloader=False)
+    print("🚀 Flask server starting...")
+    app.run(debug=True)

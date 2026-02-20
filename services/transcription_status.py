@@ -1,6 +1,9 @@
 from database import db, Voicemail
 
 def update_voicemail_status(voicemail_id, new_status, failure_reason=None):
+    """
+    Update the status of a voicemail with optional failure reason.
+    """
     voicemail = Voicemail.query.get(voicemail_id)
 
     if not voicemail:
@@ -23,6 +26,6 @@ def get_next_voicemail():
     all_received = db.session.query(Voicemail).filter_by(status="received").all()
     print(f"DEBUG: Found {len(all_received)} voicemails with status='received'")
 
-    # Fetch next voicemail in order
+    # Fetch next voicemail in order (lowest ID first)
     v = db.session.query(Voicemail).filter_by(status="received").order_by(Voicemail.id.asc()).first()
     return v
