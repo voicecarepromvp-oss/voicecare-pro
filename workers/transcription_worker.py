@@ -4,6 +4,8 @@ from datetime import datetime
 from database import db, Voicemail
 from utils.ai_processor import VoicemailAIProcessor
 from deepgram import DeepgramClient, PrerecordedOptions
+from run import app  # ✅ REQUIRED for app context
+
 
 def get_next_voicemail():
     return (
@@ -58,3 +60,10 @@ def worker_loop():
             db.session.commit()
 
         time.sleep(1)
+
+
+# ✅ ENTRY POINT + APP CONTEXT (CRITICAL FIX)
+if __name__ == "__main__":
+    print("🔥 Background Worker Starting...")
+    with app.app_context():
+        worker_loop()
