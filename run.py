@@ -281,6 +281,7 @@ def test_digest():
 from services.storage_service import upload_file
 
 @app.route("/upload", methods=["POST"])
+@login_required
 def upload_voicemail():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -290,7 +291,7 @@ def upload_voicemail():
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
-    clinic_id = 1
+    clinic_id = current_user.clinic_id
 
     s3_key = upload_file(file)
 
