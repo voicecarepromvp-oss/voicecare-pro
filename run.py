@@ -60,7 +60,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ------------------------
-# 🔥 LOGIN MANAGER (MOVED HERE)
+# 🔥 LOGIN MANAGER
 # ------------------------
 
 login_manager = LoginManager()
@@ -82,6 +82,43 @@ db.init_app(app)
 
 from flask_migrate import Migrate
 migrate = Migrate(app, db)
+
+# ------------------------
+# ✅ TEMP ADMIN ROUTE (MOVED HERE)
+# ------------------------
+
+@app.route("/create-admin")
+def create_admin():
+    existing = User.query.filter_by(email="admin@voicecare.com").first()
+    if existing:
+        return "Admin already exists"
+
+    clinic = Clinic(
+        name="Default Clinic",
+        email="admin@voicecare.com",
+        ingest_email_token=secrets.token_hex(16),
+        plan_name="starter",
+        monthly_voicemail_limit=300,
+        monthly_voicemail_used=0,
+        billing_cycle_start=datetime.utcnow(),
+        billing_cycle_end=datetime.utcnow() + timedelta(days=30),
+        overage_count=0,
+        is_active=True
+    )
+
+    db.session.add(clinic)
+    db.session.commit()
+
+    user = User(
+        email="admin@voicecare.com",
+        clinic_id=clinic.id
+    )
+    user.set_password("Admin123!")
+
+    db.session.add(user)
+    db.session.commit()
+
+    return "Admin user created"
 
 # ------------------------
 # USAGE HELPER
@@ -192,8 +229,6 @@ def index():
 
 @app.route("/seed-clinic")
 def seed_clinic():
-    from database import db, Clinic
-
     existing = Clinic.query.first()
     if existing:
         return {"message": "Clinic already exists", "clinic_id": existing.id}
@@ -215,44 +250,6 @@ def seed_clinic():
     db.session.commit()
 
     return {"message": "Clinic created", "clinic_id": clinic.id}
-
-# ✅ NEW TEMP ADMIN CREATION ROUTE
-
-@app.route("/create-admin")
-def create_admin():
-    from database import db, User, Clinic
-    from datetime import datetime, timedelta
-
-    existing = User.query.filter_by(email="admin@voicecare.com").first()
-    if existing:
-        return "Admin already exists"
-
-    clinic = Clinic(
-        name="Default Clinic",
-        email="admin@voicecare.com",
-        ingest_email_token=secrets.token_hex(16),
-        plan_name="starter",
-        monthly_voicemail_limit=300,
-        monthly_voicemail_used=0,
-        billing_cycle_start=datetime.utcnow(),
-        billing_cycle_end=datetime.utcnow() + timedelta(days=30),
-        overage_count=0,
-        is_active=True
-    )
-
-    db.session.add(clinic)
-    db.session.commit()
-
-    user = User(
-        email="admin@voicecare.com",
-        clinic_id=clinic.id
-    )
-    user.set_password("Admin123!")
-
-    db.session.add(user)
-    db.session.commit()
-
-    return "Admin user created"
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
