@@ -17,7 +17,6 @@ from datetime import datetime, timedelta
 from billing.plans import PLANS
 from utils.billing import get_clinic_usage_status
 
-# Scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.digest_service import send_daily_digest
 
@@ -61,6 +60,20 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ------------------------
+# 🔥 LOGIN MANAGER (MOVED HERE)
+# ------------------------
+
+login_manager = LoginManager()
+login_manager.login_view = "login"
+login_manager.session_protection = "strong"
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    from database import User
+    return User.query.get(int(user_id))
+
+# ------------------------
 # DATABASE
 # ------------------------
 
@@ -69,19 +82,6 @@ db.init_app(app)
 
 from flask_migrate import Migrate
 migrate = Migrate(app, db)
-
-# ------------------------
-# LOGIN MANAGER (FIXED PROPERLY)
-# ------------------------
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-login_manager.session_protection = "strong"
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 # ------------------------
 # USAGE HELPER
@@ -190,13 +190,9 @@ def index():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# ==============================
-# FIXED SEED ROUTE (EXACT TASK VERSION)
-# ==============================
-
 @app.route("/seed-clinic")
 def seed_clinic():
-    from models import db, Clinic
+    from database import db, Clinic
 
     existing = Clinic.query.first()
     if existing:
@@ -219,8 +215,6 @@ def seed_clinic():
     db.session.commit()
 
     return {"message": "Clinic created", "clinic_id": clinic.id}
-
-# ------------------------
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -248,10 +242,6 @@ def test_digest():
         return "No clinic found"
     send_daily_digest(clinic)
     return "Digest triggered"
-
-# ------------------------
-# UPLOAD
-# ------------------------
 
 from services.storage_service import upload_file
 
@@ -282,10 +272,6 @@ def upload_voicemail():
     db.session.commit()
 
     return jsonify({"success": True, "voicemail_id": voicemail.id}), 201
-
-# ------------------------
-# DASHBOARD
-# ------------------------
 
 @app.route("/dashboard")
 @login_required
@@ -322,10 +308,6 @@ def dashboard():
         pending_processing=pending_processing,
         processed_today=processed_today
     )
-
-# ------------------------
-# RUN
-# ------------------------
 
 if __name__ == "__main__":
     with app.app_context():
