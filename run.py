@@ -345,6 +345,27 @@ def dashboard():
         processed_today=processed_today
     )
 
+# ------------------------
+# ✅ DEBUG ROUTE (ADDED)
+# ------------------------
+
+@app.route("/debug-voicemail/<int:voicemail_id>")
+def debug_voicemail(voicemail_id):
+    from database import Voicemail
+    v = Voicemail.query.get(voicemail_id)
+    if not v:
+        return {"error": "Voicemail not found"}, 404
+
+    return {
+        "id": v.id,
+        "status": v.status,
+        "transcript": v.transcript,
+        "transcription_confidence": v.transcription_confidence,
+        "summary": v.summary,
+        "triage_category": v.triage_category,
+        "urgency_level": v.urgency_level
+    }
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
