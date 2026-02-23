@@ -216,6 +216,44 @@ def seed_clinic():
 
     return {"message": "Clinic created", "clinic_id": clinic.id}
 
+# ✅ NEW TEMP ADMIN CREATION ROUTE
+
+@app.route("/create-admin")
+def create_admin():
+    from database import db, User, Clinic
+    from datetime import datetime, timedelta
+
+    existing = User.query.filter_by(email="admin@voicecare.com").first()
+    if existing:
+        return "Admin already exists"
+
+    clinic = Clinic(
+        name="Default Clinic",
+        email="admin@voicecare.com",
+        ingest_email_token=secrets.token_hex(16),
+        plan_name="starter",
+        monthly_voicemail_limit=300,
+        monthly_voicemail_used=0,
+        billing_cycle_start=datetime.utcnow(),
+        billing_cycle_end=datetime.utcnow() + timedelta(days=30),
+        overage_count=0,
+        is_active=True
+    )
+
+    db.session.add(clinic)
+    db.session.commit()
+
+    user = User(
+        email="admin@voicecare.com",
+        clinic_id=clinic.id
+    )
+    user.set_password("Admin123!")
+
+    db.session.add(user)
+    db.session.commit()
+
+    return "Admin user created"
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
