@@ -12,37 +12,14 @@ import os
 import logging
 import secrets
 from pathlib import Path
-from datetime import datetime
-from database import db
-from database import Clinic
 from datetime import datetime, timedelta
-import secrets
 
 from billing.plans import PLANS
 from utils.billing import get_clinic_usage_status
 
-# ✅ NEW IMPORTS FOR SCHEDULER
+# Scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.digest_service import send_daily_digest
-
-# ------------------------
-# USAGE HELPER
-# ------------------------
-
-def get_clinic_usage(clinic):
-    plan = PLANS.get(clinic.plan_name, PLANS["starter"])
-    limit = plan["monthly_limit"]
-    remaining = None if limit is None else max(limit - clinic.monthly_voicemail_used, 0)
-    return {
-        "plan": plan["name"],
-        "used": clinic.monthly_voicemail_used,
-        "limit": limit,
-        "remaining": remaining,
-        "overage": clinic.overage_count,
-        "cycle_start": clinic.billing_cycle_start.strftime("%Y-%m-%d"),
-        "cycle_end": clinic.billing_cycle_end.strftime("%Y-%m-%d"),
-        "features": plan["features"]
-    }
 
 # ------------------------
 # LOAD ENV
@@ -66,14 +43,11 @@ from flask import (
     jsonify
 )
 
-from werkzeug.utils import secure_filename
-
 # ------------------------
 # APP SETUP
 # ------------------------
 
 app = Flask(__name__)
-import os
 
 app.secret_key = os.getenv("SECRET_KEY")
 
@@ -83,43 +57,50 @@ app.config.update(
 )
 
 app.config["ENABLE_AI_EXTRACTION"] = True
-
-# ------------------------
-# LOGIN
-# ------------------------
-
-login_manager = LoginManager()
-login_manager.login_view = "login"
-login_manager.session_protection = "strong"
-login_manager.init_app(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ------------------------
 # DATABASE
 # ------------------------
 
-import os
-
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
 from database import db, User, Voicemail, Clinic, TriageCard
 db.init_app(app)
 
-from flask import Flask
-from database import db
 from flask_migrate import Migrate
-
-app = Flask(__name__)
-
-# Database config
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Initialize DB
-db.init_app(app)
-
-# Initialize Migrate
 migrate = Migrate(app, db)
+
+# ------------------------
+# LOGIN MANAGER (FIXED PROPERLY)
+# ------------------------
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.session_protection = "strong"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# ------------------------
+# USAGE HELPER
+# ------------------------
+
+def get_clinic_usage(clinic):
+    plan = PLANS.get(clinic.plan_name, PLANS["starter"])
+    limit = plan["monthly_limit"]
+    remaining = None if limit is None else max(limit - clinic.monthly_voicemail_used, 0)
+    return {
+        "plan": plan["name"],
+        "used": clinic.monthly_voicemail_used,
+        "limit": limit,
+        "remaining": remaining,
+        "overage": clinic.overage_count,
+        "cycle_start": clinic.billing_cycle_start.strftime("%Y-%m-%d"),
+        "cycle_end": clinic.billing_cycle_end.strftime("%Y-%m-%d"),
+        "features": plan["features"]
+    }
 
 # ------------------------
 # INGESTION
@@ -127,10 +108,6 @@ migrate = Migrate(app, db)
 
 from app.routes.ingestion import ingestion_bp
 app.register_blueprint(ingestion_bp)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 # ------------------------
 # FILE PATHS
@@ -144,7 +121,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voicecare")
 
 # ------------------------
-# 🚀 AI PIPELINE WITH SAFE RETRY
+# AI PIPELINE
 # ------------------------
 
 def run_ai_pipeline(v, file_path):
@@ -163,12 +140,10 @@ def run_ai_pipeline(v, file_path):
             v.transcription_confidence = confidence
 
             v.update_status("extracting")
-
             patient_info = processor.extract_patient_info(transcript)
 
             v.update_status("summarizing")
-
-            triage = processor.summarize_and_triage(transcript, patient_info)
+            processor.summarize_and_triage(transcript, patient_info)
 
             v.update_status("completed")
             break
@@ -215,13 +190,13 @@ def index():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# ✅ ------------------------
-# ✅ TEMP SEED CLINIC ROUTE (ADDED)
-# ✅ ------------------------
+# ==============================
+# FIXED SEED ROUTE (EXACT TASK VERSION)
+# ==============================
 
 @app.route("/seed-clinic")
 def seed_clinic():
-    from database import db, Clinic
+    from models import db, Clinic
 
     existing = Clinic.query.first()
     if existing:
@@ -244,6 +219,7 @@ def seed_clinic():
     db.session.commit()
 
     return {"message": "Clinic created", "clinic_id": clinic.id}
+
 # ------------------------
 
 @app.route("/login", methods=["GET", "POST"])
@@ -274,18 +250,13 @@ def test_digest():
     return "Digest triggered"
 
 # ------------------------
-# 🚀 UPLOAD VOICEMAIL ENDPOINT (TEMP LOCAL TEST VERSION)
+# UPLOAD
 # ------------------------
 
 from services.storage_service import upload_file
 
 @app.route("/upload", methods=["POST"])
 def upload_voicemail():
-    """Temporary version for local testing without login"""
-    from datetime import datetime
-    from database import db
-    from database import Voicemail
-
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
