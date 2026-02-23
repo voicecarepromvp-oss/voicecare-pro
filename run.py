@@ -15,6 +15,8 @@ from pathlib import Path
 from datetime import datetime
 from database import db
 from database import Clinic
+from datetime import datetime, timedelta
+import secrets
 
 from billing.plans import PLANS
 from utils.billing import get_clinic_usage_status
@@ -219,18 +221,29 @@ def index():
 
 @app.route("/seed-clinic")
 def seed_clinic():
-    from database import Clinic
-    
+    from database import db, Clinic
+
     existing = Clinic.query.first()
     if existing:
         return {"message": "Clinic already exists", "clinic_id": existing.id}
-    
-    clinic = Clinic(name="Default Clinic")
+
+    clinic = Clinic(
+        name="Default Clinic",
+        email="admin@voicecare.local",
+        ingest_email_token=secrets.token_hex(16),
+        plan_name="starter",
+        monthly_voicemail_limit=300,
+        monthly_voicemail_used=0,
+        billing_cycle_start=datetime.utcnow(),
+        billing_cycle_end=datetime.utcnow() + timedelta(days=30),
+        overage_count=0,
+        is_active=True
+    )
+
     db.session.add(clinic)
     db.session.commit()
-    
-    return {"message": "Clinic created", "clinic_id": clinic.id}
 
+    return {"message": "Clinic created", "clinic_id": clinic.id}
 # ------------------------
 
 @app.route("/login", methods=["GET", "POST"])
