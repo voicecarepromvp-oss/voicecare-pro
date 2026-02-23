@@ -13,6 +13,8 @@ import logging
 import secrets
 from pathlib import Path
 from datetime import datetime
+from database import db
+from database import Clinic
 
 from billing.plans import PLANS
 from utils.billing import get_clinic_usage_status
@@ -101,7 +103,20 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 from database import db, User, Voicemail, Clinic, TriageCard
 db.init_app(app)
 
+from flask import Flask
+from database import db
 from flask_migrate import Migrate
+
+app = Flask(__name__)
+
+# Database config
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize DB
+db.init_app(app)
+
+# Initialize Migrate
 migrate = Migrate(app, db)
 
 # ------------------------
@@ -198,6 +213,26 @@ def index():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
+# ✅ ------------------------
+# ✅ TEMP SEED CLINIC ROUTE (ADDED)
+# ✅ ------------------------
+
+@app.route("/seed-clinic")
+def seed_clinic():
+    from database import Clinic
+    
+    existing = Clinic.query.first()
+    if existing:
+        return {"message": "Clinic already exists", "clinic_id": existing.id}
+    
+    clinic = Clinic(name="Default Clinic")
+    db.session.add(clinic)
+    db.session.commit()
+    
+    return {"message": "Clinic created", "clinic_id": clinic.id}
+
+# ------------------------
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -246,22 +281,17 @@ def upload_voicemail():
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
-    # --------------------------
-    # Temporary fix for local testing
-    # --------------------------
-    clinic_id = 1  # use a real clinic ID from your DB
+    clinic_id = 1
 
-    # Upload file to S3 (or mock function for testing)
     s3_key = upload_file(file)
 
-    # Save voicemail    record in DB
     voicemail = Voicemail(
         clinic_id=clinic_id,
         filename=file.filename,
         audio_url=s3_key,
         source="clinic_upload",
         received_at=datetime.utcnow(),
-        status="received"  # worker will pick this up
+        status="received"
     )
 
     db.session.add(voicemail)
