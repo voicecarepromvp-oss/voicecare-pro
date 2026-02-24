@@ -1,10 +1,14 @@
 import time
-import asyncio  # ✅ Added as per mentor instruction
+import asyncio
+import logging
 from datetime import datetime
 from database import db, Voicemail
 from utils.ai_processor import VoicemailAIProcessor
-from deepgram import DeepgramClient, PrerecordedOptions
-from run import app  # ✅ REQUIRED for app context
+from run import app
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def get_next_voicemail():
@@ -19,7 +23,7 @@ def get_next_voicemail():
 def worker_loop():
     ai_processor = VoicemailAIProcessor()
 
-    print("🚀 Worker loop running...")
+    logger.info("🚀 Worker loop running...")
 
     while True:
         voicemail = get_next_voicemail()
@@ -28,31 +32,65 @@ def worker_loop():
             time.sleep(2)
             continue
 
-        print(f"🎧 Found voicemail ID {voicemail.id}")
+        logger.info(f"🎧 Found voicemail ID {voicemail.id}")
 
         try:
-            # Step 1: Mark as transcribing
+            # ----------------------------
+            # TRANSCRIPTION
+            # ----------------------------
+            logger.info("Starting transcription...")
             voicemail.status = "transcribing"
             db.session.commit()
 
-            # Step 2: Transcribe (S3 key stored in audio_url)
             transcript, confidence = ai_processor.transcribe_audio(
                 voicemail.audio_url
             )
 
-            # Step 3: Save transcript
+            logger.info("Transcription completed")
+
             voicemail.transcript = transcript
             voicemail.transcription_confidence = confidence
             voicemail.transcribed_at = datetime.utcnow()
 
-            # Step 4: Move to next stage
+            # ----------------------------
+            # EXTRACTION
+            # ----------------------------
+            logger.info("Starting extraction...")
             voicemail.status = "extracting"
             db.session.commit()
 
-            print(f"✅ Completed voicemail {voicemail.id}")
+            patient_info = ai_processor.extract_patient_info(transcript)
+            logger.info("Extraction completed")
+
+            # ----------------------------
+            # SUMMARIZATION
+            # ----------------------------
+            logger.info("Starting summarization...")
+            voicemail.status = "summarizing"
+            db.session.commit()
+
+            summary_data = ai_processor.summarize_and_triage(
+                transcript,
+                patient_info
+            )
+
+            logger.info("Summarization completed")
+
+            # ----------------------------
+            # SAVE RESULTS
+            # ----------------------------
+            if summary_data.get("success"):
+                voicemail.summary = summary_data.get("summary")
+                voicemail.triage_category = summary_data.get("department_routing")
+                voicemail.urgency_level = summary_data.get("urgency_level")
+
+            voicemail.status = "completed"
+            db.session.commit()
+
+            logger.info(f"✅ Voicemail {voicemail.id} fully completed")
 
         except Exception as e:
-            print(f"❌ Error processing voicemail {voicemail.id}: {e}")
+            logger.error(f"❌ Pipeline failed for voicemail {voicemail.id}: {e}")
 
             voicemail.status = "failed"
             voicemail.failure_reason = str(e)
@@ -62,8 +100,7 @@ def worker_loop():
         time.sleep(1)
 
 
-# ✅ ENTRY POINT + APP CONTEXT (CRITICAL FIX)
 if __name__ == "__main__":
-    print("🔥 Background Worker Starting...")
+    logger.info("🔥 Background Worker Starting...")
     with app.app_context():
         worker_loop()
