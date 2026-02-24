@@ -7,6 +7,8 @@ import logging
 
 from services.storage_service import generate_presigned_url
 
+logger = logging.getLogger(__name__)
+
 
 # ✅ Retry Error Classifier
 def is_retryable_error(e):
@@ -43,7 +45,6 @@ class VoicemailAIProcessor:
 
         client = DeepgramClient(self.api_key)
 
-        # Generate temporary presigned S3 URL (1 hour lifetime)
         audio_url = generate_presigned_url(s3_key)
 
         options = {
@@ -71,6 +72,8 @@ class VoicemailAIProcessor:
     def extract_patient_info(self, transcription):
         """Extract patient information from transcription"""
         try:
+            logger.info(f"🔎 Extracting patient info for transcript: {transcription[:50]}...")
+
             prompt = f"""
             Extract patient information from this healthcare voicemail transcription. Return JSON only.
 
@@ -96,11 +99,12 @@ class VoicemailAIProcessor:
             )
 
             result_text = response.choices[0].message.content.strip()
+            logger.info("✅ OpenAI extraction completed")
 
             try:
                 result = json.loads(result_text)
             except Exception:
-                logging.warning(f"Patient info JSON parse failed. Raw response: {result_text}")
+                logger.warning(f"Patient info JSON parse failed. Raw response: {result_text}")
                 result = {}
 
             return {
@@ -112,7 +116,7 @@ class VoicemailAIProcessor:
             }
 
         except Exception as e:
-            logging.error(f"Error extracting patient info: {e}")
+            logger.error(f"❌ Extraction failed: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -128,9 +132,10 @@ class VoicemailAIProcessor:
 
     def summarize_and_triage(self, transcription, patient_info):
         """Create summary and determine triage routing"""
-        logging.info("🔥 AI summarize_and_triage() CALLED")
-
         try:
+            logger.info("🧠 Summarizing and triaging...")
+            logger.info(f"Transcript preview: {transcription[:50]}...")
+
             prompt = f"""
             Analyze this healthcare voicemail for summarization and triage routing.
 
@@ -160,12 +165,13 @@ class VoicemailAIProcessor:
             )
 
             raw_text = response.choices[0].message.content.strip()
-            logging.info(f"📄 RAW OpenAI response: {raw_text}")
+            logger.info("✅ Summarization & triage completed")
+            logger.info(f"📄 RAW OpenAI response: {raw_text}")
 
             try:
                 result = json.loads(raw_text)
             except Exception:
-                logging.warning("Triage JSON parse failed. Marking needs_review.")
+                logger.warning("Triage JSON parse failed. Marking needs_review.")
                 result = {
                     "summary": "Error processing voicemail",
                     "urgency_level": "medium",
@@ -182,7 +188,7 @@ class VoicemailAIProcessor:
             }
 
         except Exception as e:
-            logging.error(f"Error in summarization/triage: {e}")
+            logger.error(f"❌ Summarization failed: {e}")
             return {
                 'success': False,
                 'summary': "Error processing voicemail",
