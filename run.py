@@ -1,36 +1,13 @@
-from flask_login import (
-    LoginManager,
-    login_user,
-    login_required,
-    logout_user,
-    current_user
-)
-
-print("🔥🔥🔥 THIS IS THE REAL RUN.PY 🔥🔥🔥")
+# ------------------------
+# IMPORTS
+# ------------------------
 
 import os
 import logging
 import secrets
+import uuid
 from pathlib import Path
 from datetime import datetime, timedelta
-
-from billing.plans import PLANS
-from utils.billing import get_clinic_usage_status
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from services.digest_service import send_daily_digest
-
-# ------------------------
-# LOAD ENV
-# ------------------------
-
-from dotenv import load_dotenv
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
-
-# ------------------------
-# FLASK IMPORTS
-# ------------------------
 
 from flask import (
     Flask,
@@ -42,11 +19,39 @@ from flask import (
     jsonify
 )
 
+from flask_login import (
+    LoginManager,
+    login_user,
+    login_required,
+    logout_user,
+    current_user
+)
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from services.digest_service import send_daily_digest
+from billing.plans import PLANS
+from utils.billing import get_clinic_usage_status
+from dotenv import load_dotenv
+
+from database import db, User, Voicemail, Clinic, TriageCard
+from flask_migrate import Migrate
+from services.storage_service import upload_file
+
+# ------------------------
+# LOAD ENV
+# ------------------------
+
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
+
 # ------------------------
 # APP SETUP
 # ------------------------
 
 app = Flask(__name__)
+
+print("🔥🔥🔥 THIS IS THE REAL RUN.PY 🔥🔥🔥")
+print("APP OBJECT ID:", id(app))  # <-- Debug print after app is created
 
 app.secret_key = os.getenv("SECRET_KEY")
 
@@ -77,10 +82,7 @@ def load_user(user_id):
 # DATABASE
 # ------------------------
 
-from database import db, User, Voicemail, Clinic, TriageCard
 db.init_app(app)
-
-from flask_migrate import Migrate
 migrate = Migrate(app, db)
 
 # ------------------------
@@ -143,8 +145,9 @@ def get_clinic_usage(clinic):
 # INGESTION
 # ------------------------
 
-from app.routes.ingestion import ingestion_bp
-app.register_blueprint(ingestion_bp)
+# ❌ TEMPORARILY DISABLED TO DEBUG 500 ERROR
+# from app.routes.ingestion import ingestion_bp
+# app.register_blueprint(ingestion_bp)
 
 # ------------------------
 # FILE PATHS
@@ -278,26 +281,28 @@ def test_digest():
     send_daily_digest(clinic)
     return "Digest triggered"
 
-from services.storage_service import upload_file
+# ------------------------
+# UPLOAD ROUTE (FIXED FILENAME)
+# ------------------------
 
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload_voicemail():
-    if "file" not in request.files:
+    file = request.files.get("file")
+    
+    if not file:
         return jsonify({"error": "No file provided"}), 400
 
-    file = request.files["file"]
+    # ✅ ALWAYS generate a safe filename (ignore client filename)
+    ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
+    filename = f"{uuid.uuid4()}{ext}"
 
-    if file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
-
-    clinic_id = current_user.clinic_id
-
-    s3_key = upload_file(file)
+    # Upload to storage
+    s3_key = upload_file(file, filename=filename)  # make sure your upload_file supports custom filename
 
     voicemail = Voicemail(
-        clinic_id=clinic_id,
-        filename=file.filename,
+        clinic_id=current_user.clinic_id,
+        filename=filename,        # guaranteed non-None
         audio_url=s3_key,
         source="clinic_upload",
         received_at=datetime.utcnow(),
@@ -346,25 +351,57 @@ def dashboard():
     )
 
 # ------------------------
-# ✅ DEBUG ROUTE (ADDED)
+# STEP 8 — FLASK WEBHOOK ENDPOINT (WORKING)
 # ------------------------
 
-@app.route("/debug-voicemail/<int:voicemail_id>")
-def debug_voicemail(voicemail_id):
-    from database import Voicemail
-    v = Voicemail.query.get(voicemail_id)
-    if not v:
-        return {"error": "Voicemail not found"}, 404
+import boto3
 
-    return {
-        "id": v.id,
-        "status": v.status,
-        "transcript": v.transcript,
-        "transcription_confidence": v.transcription_confidence,
-        "summary": v.summary,
-        "triage_category": v.triage_category,
-        "urgency_level": v.urgency_level
-    }
+# Initialize S3 client (make sure AWS credentials are in your environment)
+s3 = boto3.client("s3")
+
+@app.route("/webhooks/email-ingest", methods=["POST"])
+def email_ingest():
+    try:
+        # 1️⃣ Get recipient and file from request
+        recipient = request.form.get("recipient")
+        file = request.files.get("file")
+
+        if not recipient or not file:
+            return jsonify({"error": "Missing recipient or file"}), 400
+
+        # 2️⃣ Extract clinic token from recipient email
+        token = recipient.split("@")[0]
+
+        clinic = Clinic.query.filter_by(ingest_email_token=token).first()
+        if not clinic:
+            return jsonify({"error": "Invalid clinic token"}), 404
+
+        # 3️⃣ Prepare filename and upload to S3
+        ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
+        filename = f"voicemails/{uuid.uuid4()}{ext}"
+        s3.upload_fileobj(file, "voicecarepro-audio-prod", filename)
+
+        # 4️⃣ Create Voicemail DB record (guaranteed filename)
+        voicemail = Voicemail(
+            clinic_id=clinic.id,
+            filename=file.filename if file.filename else f"voicemail_{uuid.uuid4()}.mp3",
+            audio_url=filename,
+            source="email_ingest",
+            received_at=datetime.utcnow(),
+            status="pending"
+        )
+
+        db.session.add(voicemail)
+        db.session.commit()
+
+        return jsonify({"success": True, "voicemail_id": voicemail.id}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ------------------------
+# MAIN
+# ------------------------
 
 if __name__ == "__main__":
     with app.app_context():
