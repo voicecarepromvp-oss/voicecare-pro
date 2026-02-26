@@ -398,3 +398,8 @@ def email_ingest():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+print("===== REGISTERED ROUTES =====")
+for rule in app.url_map.iter_rules():
+    print(rule)
+print("=============================")
