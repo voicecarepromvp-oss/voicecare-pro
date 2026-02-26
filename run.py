@@ -230,13 +230,6 @@ def index():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# ✅ TEMP DEBUG ROUTE ADDED (ONLY CHANGE MADE)
-@app.route("/debug-clinics")
-def debug_clinics():
-    from database import Clinic
-    clinics = Clinic.query.all()
-    return {c.id: c.ingest_email_token for c in clinics}
-
 @app.route("/seed-clinic")
 def seed_clinic():
     existing = Clinic.query.first()
