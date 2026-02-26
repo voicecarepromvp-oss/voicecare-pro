@@ -359,8 +359,7 @@ import boto3
 # Initialize S3 client (make sure AWS credentials are in your environment)
 s3 = boto3.client("s3")
 
-@app.route("/webhooks/email-ingest", methods=["POST"])
-@app.route("/webhooks/email-ingest/", methods=["POST"])
+@app.route("/webhooks/email-ingest", methods=["POST"], strict_slashes=False)
 def email_ingest():
     try:
         # 1️⃣ Get recipient and file from request
