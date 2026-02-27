@@ -365,11 +365,11 @@ from email.parser import BytesParser
 import uuid
 from datetime import datetime
 
-s3 = boto3.client("s3")
-
 @app.route("/webhooks/email-ingest", methods=["POST"], strict_slashes=False)
 def email_ingest():
     try:
+        s3 = boto3.client("s3")
+        
         data = request.get_json()
 
         bucket = data.get("bucket")
