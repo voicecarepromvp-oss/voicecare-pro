@@ -445,3 +445,11 @@ def debug_token():
         }
         for c in clinics
     }
+
+# ------------------------
+# SERVER START (RENDER FIX)
+# ------------------------
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
