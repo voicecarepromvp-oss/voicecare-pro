@@ -312,7 +312,7 @@ def upload_voicemail():
     db.session.add(voicemail)
     db.session.commit()
 
-    return jsonify({"success": True, "voicemail_id": voicemail.id}), 201
+    return redirect(url_for("dashboard"))
 
 @app.route("/dashboard")
 @login_required
