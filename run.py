@@ -354,37 +354,69 @@ def dashboard():
 # STEP 8 — FLASK WEBHOOK ENDPOINT (WORKING)
 # ------------------------
 
-import boto3
+# ------------------------
+# STEP 8 — FLASK WEBHOOK ENDPOINT (UPDATED JSON VERSION)
+# ------------------------
 
-# Initialize S3 client (make sure AWS credentials are in your environment)
+import boto3
+import email
+from email import policy
+from email.parser import BytesParser
+import uuid
+from datetime import datetime
+
 s3 = boto3.client("s3")
 
 @app.route("/webhooks/email-ingest", methods=["POST"], strict_slashes=False)
 def email_ingest():
     try:
-        # 1️⃣ Get recipient and file from request
-        recipient = request.form.get("recipient")
-        file = request.files.get("file")
+        data = request.get_json()
 
-        if not recipient or not file:
-            return jsonify({"error": "Missing recipient or file"}), 400
+        token = data.get("token")
+        bucket = data.get("s3_bucket")
+        key = data.get("s3_key")
 
-        # 2️⃣ Extract clinic token from recipient email
-        token = recipient.split("@")[0]
+        if not token or not bucket or not key:
+            return jsonify({"error": "Missing data"}), 400
 
         clinic = Clinic.query.filter_by(ingest_email_token=token).first()
         if not clinic:
             return jsonify({"error": "Invalid clinic token"}), 404
 
-        # 3️⃣ Prepare filename and upload to S3
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
-        filename = f"voicemails/{uuid.uuid4()}{ext}"
-        s3.upload_fileobj(file, "voicecarepro-audio-prod", filename)
+        # 1️⃣ Download raw email from S3
+        response = s3.get_object(Bucket=bucket, Key=key)
+        raw_email = response["Body"].read()
 
-        # 4️⃣ Create Voicemail DB record (guaranteed filename)
+        # 2️⃣ Parse MIME
+        msg = BytesParser(policy=policy.default).parsebytes(raw_email)
+
+        # 3️⃣ Extract audio attachment
+        audio_file = None
+        audio_filename = None
+
+        for part in msg.iter_attachments():
+            if part.get_content_type().startswith("audio/"):
+                audio_file = part.get_content()
+                audio_filename = part.get_filename()
+                break
+
+        if not audio_file:
+            return jsonify({"error": "No audio attachment found"}), 400
+
+        # 4️⃣ Save audio to S3 (voicemails folder)
+        ext = audio_filename.split(".")[-1] if audio_filename else "mp3"
+        filename = f"voicemails/{uuid.uuid4()}.{ext}"
+
+        s3.put_object(
+            Bucket="voicecarepro-audio-prod",
+            Key=filename,
+            Body=audio_file
+        )
+
+        # 5️⃣ Create voicemail record
         voicemail = Voicemail(
             clinic_id=clinic.id,
-            filename=file.filename if file.filename else f"voicemail_{uuid.uuid4()}.mp3",
+            filename=audio_filename,
             audio_url=filename,
             source="email_ingest",
             received_at=datetime.utcnow(),
@@ -398,8 +430,3 @@ def email_ingest():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-print("===== REGISTERED ROUTES =====")
-for rule in app.url_map.iter_rules():
-    print(rule)
-print("=============================")
