@@ -298,7 +298,7 @@ def upload_voicemail():
     filename = f"{uuid.uuid4()}{ext}"
 
     # Upload to storage
-    s3_key = upload_file(file, filename=filename)  # make sure your upload_file supports custom filename
+    s3_key = upload_file(file)  # make sure your upload_file supports custom filename
 
     voicemail = Voicemail(
         clinic_id=current_user.clinic_id,
@@ -369,7 +369,7 @@ from datetime import datetime
 def email_ingest():
     try:
         s3 = boto3.client("s3")
-        
+
         data = request.get_json()
 
         bucket = data.get("bucket")
