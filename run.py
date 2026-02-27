@@ -372,16 +372,11 @@ def email_ingest():
     try:
         data = request.get_json()
 
-        token = data.get("token")
-        bucket = data.get("s3_bucket")
-        key = data.get("s3_key")
+        bucket = data.get("bucket")
+        key = data.get("key")
 
-        if not token or not bucket or not key:
-            return jsonify({"error": "Missing data"}), 400
-
-        clinic = Clinic.query.filter_by(ingest_email_token=token).first()
-        if not clinic:
-            return jsonify({"error": "Invalid clinic token"}), 404
+        if not bucket or not key:
+            return jsonify({"error": "Missing S3 data"}), 400
 
         # 1️⃣ Download raw email from S3
         response = s3.get_object(Bucket=bucket, Key=key)
@@ -390,7 +385,18 @@ def email_ingest():
         # 2️⃣ Parse MIME
         msg = BytesParser(policy=policy.default).parsebytes(raw_email)
 
-        # 3️⃣ Extract audio attachment
+        # 3️⃣ Extract recipient + token
+        recipient = msg["To"]
+        if not recipient:
+            return jsonify({"error": "No recipient found"}), 400
+
+        token = recipient.split("@")[0].strip()
+
+        clinic = Clinic.query.filter_by(ingest_email_token=token).first()
+        if not clinic:
+            return jsonify({"error": "Invalid clinic token"}), 404
+
+        # 4️⃣ Extract audio attachment
         audio_file = None
         audio_filename = None
 
@@ -403,7 +409,7 @@ def email_ingest():
         if not audio_file:
             return jsonify({"error": "No audio attachment found"}), 400
 
-        # 4️⃣ Save audio to S3 (voicemails folder)
+        # 5️⃣ Save audio to S3 (voicemails folder)
         ext = audio_filename.split(".")[-1] if audio_filename else "mp3"
         filename = f"voicemails/{uuid.uuid4()}.{ext}"
 
@@ -413,7 +419,7 @@ def email_ingest():
             Body=audio_file
         )
 
-        # 5️⃣ Create voicemail record
+        # 6️⃣ Create voicemail record
         voicemail = Voicemail(
             clinic_id=clinic.id,
             filename=audio_filename,
