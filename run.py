@@ -445,6 +445,19 @@ def email_ingest():
 def debug_token():
     return {"status": "route works"}
 
+@app.route("/debug/all-voicemails")
+def debug_all_voicemails():
+    vms = Voicemail.query.order_by(Voicemail.id.desc()).all()
+    return {
+        "voicemails": [
+            {
+                "id": v.id,
+                "clinic_id": v.clinic_id,
+                "status": v.status
+            } for v in vms
+        ]
+    }
+
 # ------------------------
 # SERVER START (RENDER FIX)
 # ------------------------
