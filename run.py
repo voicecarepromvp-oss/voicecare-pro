@@ -437,14 +437,7 @@ def email_ingest():
 
 @app.route("/debug/token")
 def debug_token():
-    clinics = Clinic.query.all()
-    return {
-        c.id: {
-            "name": c.name,
-            "ingest_email_token": c.ingest_email_token
-        }
-        for c in clinics
-    }
+    return {"status": "route works"}
 
 # ------------------------
 # SERVER START (RENDER FIX)
