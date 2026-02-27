@@ -430,3 +430,18 @@ def email_ingest():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# ------------------------
+# DEBUG TOKEN ROUTE
+# ------------------------
+
+@app.route("/debug/token")
+def debug_token():
+    clinics = Clinic.query.all()
+    return {
+        c.id: {
+            "name": c.name,
+            "ingest_email_token": c.ingest_email_token
+        }
+        for c in clinics
+    }
