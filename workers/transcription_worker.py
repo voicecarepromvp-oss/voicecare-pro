@@ -19,6 +19,10 @@ from database import db, Voicemail
 from utils.ai_processor import VoicemailAIProcessor
 from run import app  # Flask app for context
 
+# ✅ STEP 2.1 — ADDED IMPORTS
+from services.email_service import send_email
+from database import Clinic
+
 # ----------------------------
 # Logger
 # ----------------------------
@@ -35,6 +39,51 @@ def get_next_voicemail():
         .order_by(Voicemail.id.asc())
         .first()
     )
+
+# ✅ STEP 2.2 — ADDED NOTIFICATION FUNCTION
+def send_clinic_notification(voicemail):
+
+    clinic = Clinic.query.get(voicemail.clinic_id)
+
+    if not clinic:
+        print("Clinic not found. Skipping email.")
+        return
+
+    if not clinic.email:
+        print("Clinic email not configured. Skipping email.")
+        return
+
+    subject = f"New Voicemail - {voicemail.urgency_level.upper()}"
+
+    html_content = f"""
+    <h2>New Voicemail Received</h2>
+
+    <p><strong>Summary:</strong> {voicemail.summary}</p>
+    <p><strong>Urgency:</strong> {voicemail.urgency_level}</p>
+    <p><strong>Triage Category:</strong> {voicemail.triage_category}</p>
+
+    <hr>
+
+    <p><strong>Patient Name:</strong> {voicemail.patient_name}</p>
+    <p><strong>Phone:</strong> {voicemail.patient_phone}</p>
+
+    <hr>
+
+    <p><strong>Recommended Action:</strong></p>
+    <p>{voicemail.recommended_action}</p>
+
+    <hr>
+
+    <p><strong>Full Transcript:</strong></p>
+    <p>{voicemail.transcript}</p>
+    """
+
+    success = send_email(clinic.email, subject, html_content)
+
+    if success:
+        print(f"✅ Notification email sent to {clinic.email}")
+    else:
+        print("❌ Email sending failed.")
 
 # ----------------------------
 # Main worker loop
@@ -99,6 +148,9 @@ def worker_loop():
 
                 voicemail.status = "completed"
                 db.session.commit()
+
+                # ✅ STEP 2.3 — CALL NOTIFICATION AFTER COMPLETION
+                send_clinic_notification(voicemail)
 
                 logger.info(f"🏁 Voicemail {voicemail.id} fully completed")
 
