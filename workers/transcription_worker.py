@@ -40,7 +40,7 @@ def get_next_voicemail():
         .first()
     )
 
-# ✅ STEP 2.2 — ADDED NOTIFICATION FUNCTION
+# ✅ FIXED NOTIFICATION FUNCTION (SAFE — NO CRASH)
 def send_clinic_notification(voicemail):
 
     clinic = Clinic.query.get(voicemail.clinic_id)
@@ -53,29 +53,19 @@ def send_clinic_notification(voicemail):
         print("Clinic email not configured. Skipping email.")
         return
 
-    subject = f"New Voicemail - {voicemail.urgency_level.upper()}"
+    subject = f"New Voicemail - {(voicemail.urgency_level or 'unknown').upper()}"
 
     html_content = f"""
     <h2>New Voicemail Received</h2>
 
-    <p><strong>Summary:</strong> {voicemail.summary}</p>
-    <p><strong>Urgency:</strong> {voicemail.urgency_level}</p>
-    <p><strong>Triage Category:</strong> {voicemail.triage_category}</p>
-
-    <hr>
-
-    <p><strong>Patient Name:</strong> {voicemail.patient_name}</p>
-    <p><strong>Phone:</strong> {voicemail.patient_phone}</p>
-
-    <hr>
-
-    <p><strong>Recommended Action:</strong></p>
-    <p>{voicemail.recommended_action}</p>
+    <p><strong>Summary:</strong> {voicemail.summary or 'N/A'}</p>
+    <p><strong>Urgency:</strong> {voicemail.urgency_level or 'N/A'}</p>
+    <p><strong>Triage Category:</strong> {voicemail.triage_category or 'N/A'}</p>
 
     <hr>
 
     <p><strong>Full Transcript:</strong></p>
-    <p>{voicemail.transcript}</p>
+    <p>{voicemail.transcript or 'N/A'}</p>
     """
 
     success = send_email(clinic.email, subject, html_content)
@@ -149,7 +139,7 @@ def worker_loop():
                 voicemail.status = "completed"
                 db.session.commit()
 
-                # ✅ STEP 2.3 — CALL NOTIFICATION AFTER COMPLETION
+                # ✅ Call notification AFTER completion
                 send_clinic_notification(voicemail)
 
                 logger.info(f"🏁 Voicemail {voicemail.id} fully completed")
@@ -161,7 +151,7 @@ def worker_loop():
                 voicemail.last_error_at = datetime.utcnow()
                 db.session.commit()
 
-            time.sleep(1)  # small delay before next voicemail
+            time.sleep(1)
 
 # ----------------------------
 # Entrypoint
