@@ -472,7 +472,7 @@ def debug_clinic_email():
 
 @app.route("/debug/set-real-email")
 def set_real_email():
-    clinic = Clinic.query.first()
+    clinic = Clinic.query.get(7)  # ← Target ID 7 explicitly
 
     if not clinic:
         return "Clinic not found"
@@ -481,7 +481,6 @@ def set_real_email():
     db.session.commit()
 
     return f"Updated clinic {clinic.id} email successfully."
-
 # ------------------------
 # SERVER START (RENDER FIX)
 # ------------------------
