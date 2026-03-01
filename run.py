@@ -470,17 +470,6 @@ def debug_clinic_email():
         "clinic_email": clinic.email
     }
 
-@app.route("/debug/set-real-email")
-def set_real_email():
-    clinic = Clinic.query.get(7)  # ← Target ID 7 explicitly
-
-    if not clinic:
-        return "Clinic not found"
-
-    clinic.email = "voicecarepromvp@gmail.com"
-    db.session.commit()
-
-    return f"Updated clinic {clinic.id} email successfully."
 # ------------------------
 # SERVER START (RENDER FIX)
 # ------------------------
