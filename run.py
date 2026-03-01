@@ -458,6 +458,18 @@ def debug_all_voicemails():
         ]
     }
 
+@app.route("/debug/clinic-email")
+def debug_clinic_email():
+    clinic = Clinic.query.first()
+    if not clinic:
+        return {"error": "No clinic found"}
+
+    return {
+        "clinic_id": clinic.id,
+        "clinic_name": clinic.name,
+        "clinic_email": clinic.email
+    }
+
 # ------------------------
 # SERVER START (RENDER FIX)
 # ------------------------
