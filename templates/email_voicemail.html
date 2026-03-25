@@ -1,0 +1,46 @@
+<html>
+<body style="font-family:Arial;background:#f4f6f8;padding:30px;">
+
+<div style="background:white;padding:25px;border-radius:10px;max-width:600px;margin:auto;">
+
+<h2>VoiceCare Pro — New Voicemail</h2>
+
+<p><b>Patient:</b> {{ voicemail.patient_name }}</p>
+
+<p><b>Caller Phone:</b> {{ voicemail.caller_phone }}</p>
+
+<p><b>Callback Phone:</b> {{ voicemail.patient_phone }}</p>
+
+<hr>
+
+<h3>AI Summary</h3>
+<p>{{ voicemail.summary }}</p>
+
+<hr>
+
+<p><b>Department:</b> {{ voicemail.department }}</p>
+
+<p><b>Recommended Action:</b> {{ voicemail.recommended_action }}</p>
+
+<p><b>Priority:</b> {{ voicemail.priority }}</p>
+
+<hr>
+
+<a href="{{ dashboard_link }}"
+style="background:#2563eb;color:white;padding:12px 18px;border-radius:6px;text-decoration:none;">
+Open in VoiceCare Pro
+</a>
+
+</div>
+
+<br>
+
+<div style="text-align:center;color:#888;font-size:12px;">
+VoiceCare Pro<br>
+AI Voicemail Intelligence for Clinics<br>
+www.getvoicecarepro.com<br>
+support@getvoicecarepro.com
+</div>
+
+</body>
+</html>

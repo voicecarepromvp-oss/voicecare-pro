@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Voicemail Uploaded - Healthcare Voicemail Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Voicemail Uploaded Successfully
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <p class="lead">Your voicemail has been uploaded and is ready for processing.</p>
+
+                <!-- Show uploaded file name -->
+                <p><strong>File:</strong> {{ filename }}</p>
+
+                <!-- Audio player -->
+                <audio controls class="w-100 mt-3">
+                    <source src="{{ url_for('uploaded_file', filename=filename) }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+
+                <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>
+                        Upload Another
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+(venv) flask shell

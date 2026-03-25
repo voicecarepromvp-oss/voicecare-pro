@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VoiceCare Pro — Admin Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .review { background-color: #ffe6e6; }
+        a { text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<h2>📞 VoiceCare Pro — Voicemails</h2>
+
+<form method="get">
+    <label>Filter by department:</label>
+    <select name="department" onchange="this.form.submit()">
+        <option value="">All</option>
+        <option value="Scheduling">Scheduling</option>
+        <option value="Billing">Billing</option>
+        <option value="Front Desk">Front Desk</option>
+        <option value="Clinical">Clinical</option>
+    </select>
+</form>
+
+<br>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>File</th>
+        <th>Status</th>
+        <th>Intent</th>
+        <th>Department</th>
+        <th>Priority</th>
+        <th>Confidence</th>
+        <th>Review</th>
+        <th>Action</th>
+    </tr>
+
+    {% for v in voicemails %}
+    <tr class="{% if v.status == 'needs_review' %}review{% endif %}">
+        <td>{{ v.id }}</td>
+        <td>{{ v.filename }}</td>
+        <td>{{ v.status }}</td>
+        <td>{{ v.intent }}</td>
+        <td>{{ v.department }}</td>
+        <td>{{ v.priority }}</td>
+        <td>{{ "%.2f"|format(v.confidence or 0) }}</td>
+        <td>
+            {% if v.status == 'needs_review' %}
+                ⚠ Needs Review
+            {% else %}
+                ✅ Auto
+            {% endif %}
+        </td>
+        <td>
+            <a href="/admin/voicemail/{{ v.id }}">Open</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

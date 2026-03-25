@@ -1,0 +1,22 @@
+# Environment
+.env
+
+# Virtual env
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Database
+*.db
+
+# Uploaded audio files
+uploads/
+static/uploads/
+*.mp3
+*.wav
+
+# Lambda build artifacts
+lambda_package/
+*.zip

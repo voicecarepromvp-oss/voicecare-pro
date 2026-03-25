@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Voicemail - Healthcare Voicemail Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-microphone me-2"></i>
+                    Upload Patient Voicemail
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Supported formats:</strong> MP3, WAV, M4A, OGG, FLAC, AAC (Max 16MB)
+                </div>
+
+                <!-- ✅ FIXED FORM -->
+                <form action="{{ url_for('ingestion.ingest_voicemail') }}"
+                      method="post"
+                      enctype="multipart/form-data"
+                      id="uploadForm">
+
+                    <div class="mb-4">
+                        <label for="voicemail" class="form-label">Select Voicemail File</label>
+                        <div class="input-group">
+                            <input type="file"
+                                   class="form-control"
+                                   id="voicemail"
+                                   name="voicemail"
+                                   accept=".mp3,.wav,.m4a,.ogg,.flac,.aac,audio/*"
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" id="clearFile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            The AI will automatically transcribe and extract patient information from the voicemail.
+                        </div>
+                    </div>
+
+                    <!-- File Preview Area -->
+                    <div id="filePreview" class="mb-4" style="display: none;">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-file-audio me-2"></i>
+                                    Selected File
+                                </h6>
+                                <div id="fileInfo"></div>
+                                <audio controls class="w-100 mt-2" id="audioPreview" style="display: none;">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="mb-4" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar"
+                                 style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted mt-1 d-block">Uploading voicemail...</small>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">
+                            <i class="fas fa-upload me-1"></i>
+                            Upload & Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Processing Info -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-robot me-2"></i>
+                    What happens after upload?
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i> AI transcription</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Extract patient details</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Identify intent</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i> Appointment requests</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Billing queries</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Smart routing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('voicemail');
+    const clearBtn = document.getElementById('clearFile');
+    const filePreview = document.getElementById('filePreview');
+    const fileInfo = document.getElementById('fileInfo');
+    const audioPreview = document.getElementById('audioPreview');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadProgress = document.getElementById('uploadProgress');
+
+    fileInput.addEventListener('change', function () {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+        fileInfo.innerHTML = `
+            <strong>Name:</strong> ${file.name}<br>
+            <strong>Size:</strong> ${sizeMB} MB<br>
+            <strong>Type:</strong> ${file.type}
+        `;
+
+        if (file.type.startsWith('audio/')) {
+            audioPreview.src = URL.createObjectURL(file);
+            audioPreview.style.display = 'block';
+        }
+
+        filePreview.style.display = 'block';
+    });
+
+    clearBtn.addEventListener('click', function () {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
+        audioPreview.style.display = 'none';
+    });
+
+    uploadForm.addEventListener('submit', function () {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+        uploadProgress.style.display = 'block';
+    });
+});
+</script>
+{% endblock %}

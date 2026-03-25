@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Voicemail Review{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+```
+<div class="card shadow mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0">
+      <i class="fas fa-headphones me-2"></i>
+      Voicemail Review
+    </h5>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Status -->
+    <p>
+      <strong>Status:</strong>
+      <span class="badge bg-success">
+        {{ voicemail.status or "Unknown" }}
+      </span>
+    </p>
+
+    <!-- Basic Info -->
+    <p>
+      <strong>Filename:</strong>
+      {{ voicemail.filename }}
+    </p>
+
+    <p>
+      <strong>AI Intent:</strong>
+      <span class="badge bg-info text-dark">
+        {{ voicemail.intent or "Unknown" }}
+      </span>
+    </p>
+
+    <p>
+      <strong>Confidence:</strong>
+      {{ (voicemail.transcription_confidence * 100)|round(1) if voicemail.transcription_confidence else "N/A" }}%
+    </p>
+
+    {% if voicemail.needs_review == 1 %}
+      <div class="alert alert-warning mt-3">
+        ⚠️ <strong>AI flagged this voicemail for human review</strong>
+      </div>
+    {% endif %}
+
+    <hr>
+
+    <!-- Audio Player -->
+    <h6>Audio Player</h6>
+    <audio controls class="mb-4 w-100">
+      <source src="https://voicecarepro-audio-prod.s3.amazonaws.com/{{ voicemail.audio_url }}">
+      Your browser does not support the audio element.
+    </audio>
+
+    <hr>
+
+    <!-- Caller Information -->
+    <h6>Caller Information</h6>
+
+    <p>
+      <strong>Patient Name:</strong>
+      {{ voicemail.patient_name or "Unknown" }}
+    </p>
+
+    <p>
+      <strong>Patient Phone (Callback):</strong>
+      {{ voicemail.patient_phone or "Unknown" }}
+    </p>
+
+    <p>
+      <strong>Caller Phone:</strong>
+      {{ voicemail.caller_phone or "Unknown" }}
+    </p>
+
+    <hr>
+
+    <!-- AI Triage -->
+    <h6>AI Triage</h6>
+
+    <p>
+      <strong>Department:</strong>
+      {{ voicemail.department or "Unknown" }}
+    </p>
+
+    <p>
+      <strong>Recommended Action:</strong>
+      {{ voicemail.recommended_action or "Unknown" }}
+    </p>
+
+    <p>
+      <strong>Priority:</strong>
+
+      {% if voicemail.priority == 'HIGH' %}
+        <span style="color:red;">{{ voicemail.priority }}</span>
+
+      {% elif voicemail.priority == 'MEDIUM' %}
+        <span style="color:orange;">{{ voicemail.priority }}</span>
+
+      {% else %}
+        <span style="color:green;">{{ voicemail.priority or "Unknown" }}</span>
+
+      {% endif %}
+
+    </p>
+
+    <hr>
+
+    <!-- AI Summary -->
+    <h6>AI Summary</h6>
+
+    <div class="border rounded p-3 bg-light mb-4">
+      {{ voicemail.summary or "No summary generated yet." }}
+    </div>
+
+    <hr>
+
+    <!-- Transcript -->
+    <h6>Transcript</h6>
+
+    {% if voicemail.transcription_confidence %}
+      <small class="text-muted d-block mb-2">
+        Confidence: {{ (voicemail.transcription_confidence * 100) | round(1) }}%
+      </small>
+    {% endif %}
+
+    <div class="border rounded p-3 bg-light mb-4" style="white-space: pre-wrap;">
+      {{ voicemail.transcript }}
+    </div>
+
+    <!-- ✅ TRIAGE DISPLAY (NEW) -->
+    {% if voicemail.triage_card %}
+      <hr>
+
+      <h6>Triage Summary</h6>
+
+      <p>
+        <strong>Urgency:</strong>
+        {% if voicemail.triage_card.urgency == 'urgent' %}
+          <span class="badge bg-danger">URGENT</span>
+        {% else %}
+          <span class="badge bg-success">Non-Urgent</span>
+        {% endif %}
+      </p>
+
+      <p>
+        <strong>Summary:</strong>
+        {{ voicemail.triage_card.summary }}
+      </p>
+    {% endif %}
+
+    <hr>
+
+    <!-- Human Override Form -->
+    <form method="POST">
+      <div class="row">
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Intent</label>
+          <input
+            type="text"
+            name="intent"
+            class="form-control"
+            value="{{ voicemail.intent }}"
+          >
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Department</label>
+          <select name="department" class="form-select">
+            <option value="front_desk" {% if voicemail.department=="front_desk" %}selected{% endif %}>
+              Scheduling
+            </option>
+            <option value="billing" {% if voicemail.department=="billing" %}selected{% endif %}>
+              Billing
+            </option>
+            <option value="clinical" {% if voicemail.department=="clinical" %}selected{% endif %}>
+              Clinical
+            </option>
+            <option value="general" {% if voicemail.department=="general" %}selected{% endif %}>
+              General
+            </option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="form-check mt-3">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          name="reviewed"
+          {% if voicemail.needs_review == 0 %}checked{% endif %}
+        >
+        <label class="form-check-label">
+          Mark as Reviewed
+        </label>
+      </div>
+
+      <div class="mt-4 text-end">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+          Back
+        </a>
+        <button type="submit" class="btn btn-primary">
+          Save Changes
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+```
+
+  </div>
+</div>
+{% endblock %}
