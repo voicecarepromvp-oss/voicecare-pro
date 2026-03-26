@@ -331,10 +331,18 @@ class VoicemailAIProcessor:
             voicemail.transcription_confidence = confidence
             voicemail.transcription_provider = "deepgram_v5"
 
+            # 🔒 Protect caller_phone from being overwritten
+            if voicemail.caller_phone:
+                logger.info(f"✅ caller_phone preserved: {voicemail.caller_phone}")
+            else:
+                logger.info("⚠️ caller_phone is missing before commit")
+
             if triage_result.get("success"):
                 voicemail.summary = triage_result.get("summary")
                 voicemail.triage_category = triage_result.get("department_routing")
                 voicemail.urgency_level = triage_result.get("urgency_level")
+
+            logger.info(f"🚨 BEFORE COMMIT caller_phone: {voicemail.caller_phone}")    
 
             db.session.commit()
 
