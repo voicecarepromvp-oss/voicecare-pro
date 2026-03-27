@@ -703,22 +703,29 @@ def email_ingest():
 
         # 6️⃣ Create voicemail record
         voicemail = Voicemail(
-         clinic_id=clinic.id,
-         filename=audio_filename,
-         audio_url=filename,
-         source="email_ingest",
-         received_at=datetime.utcnow(),
-         status="pending",
-         caller_phone=caller_phone,
-         s3_key=key
+            clinic_id=clinic.id,
+            filename=audio_filename,
+            audio_url=filename,
+            source="email_ingest",
+            received_at=datetime.utcnow(),
+            status="pending",
+            s3_key=key
         )
+
+        # 🔥 Force assign AFTER creation
+        voicemail.caller_phone = caller_phone
+
+        logger.info(f"💾 SAVING caller_phone to DB: {caller_phone}")
 
         db.session.add(voicemail)
         db.session.commit()
 
-        return jsonify({"success": True, "voicemail_id": voicemail.id}), 200
+        logger.info(f"✅ DB STORED caller_phone: {voicemail.caller_phone}")
 
+        return jsonify({"success": True, "voicemail_id": voicemail.id}), 200
+    
     except Exception as e:
+        logger.error(f"❌ Email ingest failed: {e}")
         return jsonify({"error": str(e)}), 500
     
 # ------------------------
