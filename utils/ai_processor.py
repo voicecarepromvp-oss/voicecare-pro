@@ -334,6 +334,15 @@ class VoicemailAIProcessor:
             voicemail.transcription_confidence = confidence
             voicemail.transcription_provider = "deepgram_v5"
 
+            # 🛡️ HARD FIX — restore caller_phone before commit
+            existing_vm = Voicemail.query.get(voicemail.id)
+
+            if existing_vm and existing_vm.caller_phone:
+                voicemail.caller_phone = existing_vm.caller_phone
+                logger.info(f"🛡️ Restored caller_phone: {voicemail.caller_phone}")
+            else:
+                logger.warning("⚠️ caller_phone missing even in DB before commit")
+
             # 🔒 Protect caller_phone from being overwritten
             if voicemail.caller_phone:
                 logger.info(f"✅ caller_phone preserved: {voicemail.caller_phone}")
