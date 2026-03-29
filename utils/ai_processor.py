@@ -300,6 +300,9 @@ class VoicemailAIProcessor:
     # ============================================================
 
     def process_voicemail_complete(self, voicemail, s3_key):
+       # 🔥 Refresh from DB to avoid stale data overwrite
+        db.session.refresh(voicemail)
+        logger.info(f"🔄 Refreshed voicemail from DB. caller_phone: {voicemail.caller_phone}")
         """Complete AI processing pipeline with safe DB commit"""
 
         results = {
