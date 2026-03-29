@@ -133,9 +133,6 @@ def worker_loop():
                         voicemail.patient_dob = patient_info.get("patient_dob")
                         voicemail.call_reason = patient_info.get("call_reason")
 
-                         # NEW LINE
-                        voicemail.caller_phone = patient_info.get("caller_phone")
-
                     db.session.commit()
 
                     # ----------------------------
