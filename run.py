@@ -300,6 +300,7 @@ def signup():
         token = secrets.token_hex(16)
         clinic = Clinic(
             name=clinic_name,
+            email=email,
             ingest_email_token=token,
             plan_name="starter",
             monthly_voicemail_limit=300,
