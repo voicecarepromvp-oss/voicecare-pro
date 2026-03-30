@@ -54,10 +54,17 @@
 
     <!-- Audio Player -->
     <h6>Audio Player</h6>
-    <audio controls class="mb-4 w-100">
-      <source src="https://voicecarepro-audio-prod.s3.amazonaws.com/{{ voicemail.audio_url }}">
-      Your browser does not support the audio element.
-    </audio>
+
+    {% if audio_url %}
+      <audio controls class="mb-4 w-100">
+        <source src="{{ audio_url }}">
+        Your browser does not support the audio element.
+      </audio>
+    {% else %}
+      <div class="alert alert-warning">
+        Audio not available
+      </div>
+    {% endif %}
 
     <hr>
 

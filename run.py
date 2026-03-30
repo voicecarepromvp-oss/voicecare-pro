@@ -36,7 +36,7 @@ from dotenv import load_dotenv
 
 from database import db, User, Voicemail, Clinic, TriageCard
 from flask_migrate import Migrate
-from services.storage_service import upload_file
+from services.storage_service import upload_file, generate_presigned_url
 
 # ------------------------
 # LOAD ENV
@@ -565,9 +565,15 @@ def voicemail_detail(voicemail_id):
         flash("Voicemail updated successfully", "success")
         return redirect(url_for("dashboard"))
 
+    # 🔊 Generate secure audio URL
+    audio_url = None
+    if voicemail.audio_url:
+        audio_url = generate_presigned_url(voicemail.audio_url)
+
     return render_template(
         "voicemail_detail.html",
-        voicemail=voicemail
+        voicemail=voicemail,
+        audio_url=audio_url
     )
 
 # ------------------------
