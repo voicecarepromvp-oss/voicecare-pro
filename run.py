@@ -28,6 +28,7 @@ from flask_login import (
     current_user
 )
 
+from services.billing_service import BillingService
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.digest_service import send_daily_digest
 from billing.plans import PLANS
@@ -269,7 +270,7 @@ def start_scheduler(app):
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
+    return render_template("landing.html")
 
 @app.route("/seed-clinic")
 def seed_clinic():
@@ -427,6 +428,20 @@ def test_digest():
     send_daily_digest(clinic)
     return "Digest triggered"
 
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
+@app.route("/hipaa")
+def hipaa():
+    return render_template("hipaa.html")
+
 # ------------------------
 # UPLOAD ROUTE (FIXED FILENAME)
 # ------------------------
@@ -439,16 +454,30 @@ def upload_voicemail():
     if not file:
         return jsonify({"error": "No file provided"}), 400
 
-    # ✅ ALWAYS generate a safe filename (ignore client filename)
+    # ----------------------------
+    # 🔥 BILLING CHECK (ADD THIS HERE)
+    # ----------------------------
+    clinic = current_user.clinic
+
+    allowed, error = BillingService.can_process_voicemail(clinic)
+
+    if not allowed:
+        return jsonify({"error": error}), 403
+
+    # ----------------------------
+    # FILE PROCESSING STARTS HERE
+    # ----------------------------
+
+    # ALWAYS generate a safe filename
     ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
     filename = f"{uuid.uuid4()}{ext}"
 
     # Upload to storage
-    s3_key = upload_file(file, filename)  # make sure your upload_file supports custom filename
+    s3_key = upload_file(file, filename)
 
     voicemail = Voicemail(
         clinic_id=current_user.clinic_id,
-        filename=filename,        # guaranteed non-None
+        filename=filename,
         audio_url=s3_key,
         source="clinic_upload",
         received_at=datetime.utcnow(),
@@ -456,6 +485,13 @@ def upload_voicemail():
     )
 
     db.session.add(voicemail)
+    db.session.commit()
+
+    # ----------------------------
+    # 🔥 RECORD USAGE (ADD THIS HERE)
+    # ----------------------------
+
+    BillingService.record_usage(clinic)
     db.session.commit()
 
     return redirect(url_for("dashboard"))
