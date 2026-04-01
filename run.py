@@ -434,19 +434,21 @@ def test_digest():
     send_daily_digest(clinic)
     return "Digest triggered"
 
-@app.route("/privacy")
+@app.route("/privacypolicy")
 def privacy():
     return render_template("privacy.html")
 
-
-@app.route("/terms")
+@app.route("/termsofservice")
 def terms():
     return render_template("terms.html")
 
-
-@app.route("/hipaa")
+@app.route("/hipaanotice")
 def hipaa():
     return render_template("hipaa.html")
+
+@app.route("/refundpolicy")
+def refund():
+    return render_template("refund.html")
 
 # ------------------------
 # UPLOAD ROUTE (FIXED FILENAME)
