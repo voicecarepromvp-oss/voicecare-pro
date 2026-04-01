@@ -286,6 +286,9 @@ def seed_clinic():
 # ------------------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if current_user.is_authenticated:
+       return redirect(url_for("dashboard"))
+
     from werkzeug.security import generate_password_hash
 
     if request.method == "POST":
@@ -403,6 +406,9 @@ def create_user():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+       return redirect(url_for("dashboard"))
+    
     if request.method == "POST":
         email = request.form.get("email") or request.form.get("username")
         password = request.form.get("password")

@@ -95,6 +95,31 @@
     transform: translateY(-1px);
   }
 
+  .nav-login {
+    color: var(--muted) !important;
+    font-weight: 400 !important;
+    transition: color 0.2s !important;
+  }
+
+  .nav-login:hover { color: var(--white) !important; }
+
+  .nav-signup {
+    background: transparent;
+    color: var(--teal) !important;
+    font-weight: 500 !important;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,191,166,0.4);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s !important;
+  }
+
+  .nav-signup:hover {
+    background: var(--teal-dim) !important;
+    border-color: var(--teal) !important;
+    color: var(--teal) !important;
+    transform: translateY(-1px);
+  }
+
   /* ─── HERO ─── */
   #home {
     min-height: 100vh;
@@ -1020,10 +1045,11 @@
     <li><a onclick="scrollTo('features')">Features</a></li>
     <li><a onclick="scrollTo('pricing')">Pricing</a></li>
     <li><a onclick="scrollTo('contact')">Contact</a></li>
-    <li><a href="/cdn-cgi/l/email-protection#d6a5a3a6a6b9a4a296b1b3a2a0b9bfb5b3b5b7a4b3a6a4b9f8b5b9bb" class="nav-cta">Get Started</a></li>
+    <li><a href="/login" class="nav-login">Log In</a></li>
+    <li><a href="/signup" class="nav-signup">Sign Up</a></li>
+    <li><a href="/cdn-cgi/l/email-protection#5b282e2b2b34292f1b3c3e2f2d3432383e383a293e2b293475383436" class="nav-cta">Get Started</a></li>
   </ul>
 </nav>
-
 <!-- ─── HERO ─── -->
 <section id="home">
   <div class="hero-glow"></div>
@@ -1041,7 +1067,7 @@
         VoiceCare Pro listens to every voicemail so your staff doesn't have to. Get instant AI summaries, caller details, department routing, and recommended actions — delivered straight to your inbox.
       </p>
       <div class="hero-actions">
-        <a href="/cdn-cgi/l/email-protection#f3808683839c8187b3949687859c9a90969092819683819cdd909c9e" class="btn-primary">
+        <a href="/cdn-cgi/l/email-protection#0b787e7b7b64797f4b6c6e7f7d6462686e686a796e7b796425686466" class="btn-primary">
           Start Free Trial →
         </a>
         <a onclick="scrollTo('how')" class="btn-ghost">See How It Works</a>
@@ -1101,7 +1127,7 @@
         <div class="step-num">01</div>
         <div class="step-icon">📲</div>
         <h3 class="step-h3">Forward Your Voicemails</h3>
-        <p class="step-p">We give your clinic a unique email address like <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e6858a8f888f85a68b878f8ac881839290898f858385879483969489c885898b">[email&#160;protected]</a></span>. Set your RingCentral or any softphone to forward voicemails there — done.</p>
+        <p class="step-p">We give your clinic a unique email address like <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="07646b6e696e64476a666e6b2960627371686e6462646675627775682964686a">[email&#160;protected]</a></span>. Set your RingCentral or any softphone to forward voicemails there — done.</p>
       </div>
       <div class="step-card">
         <div class="step-icon">🤖</div>
@@ -1113,7 +1139,7 @@
         <div class="step-icon">📧</div>
         <div class="step-num">03</div>
         <h3 class="step-h3">Your Staff Gets the Summary</h3>
-        <p class="step-p">A clean, structured email is sent from <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b7d9d8c3ded1ded4d6c3ded8d9c4f7d0d2c3c1d8ded4d2d4d6c5d2c7c5d899d4d8da">[email&#160;protected]</a></span> with exactly what's needed — no audio file, no reading transcripts.</p>
+        <p class="step-p">A clean, structured email is sent from <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4dadbc0ddd2ddd7d5c0dddbdac7f4d3d1c0c2dbddd7d1d7d5c6d1c4c6db9ad7dbd9">[email&#160;protected]</a></span> with exactly what's needed — no audio file, no reading transcripts.</p>
       </div>
       <div class="step-card">
         <div class="step-icon">📊</div>
@@ -1174,7 +1200,7 @@
             <div class="email-dot"></div>
             <div class="email-dot"></div>
           </div>
-          <span class="email-from"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b8d6d7ccd1ded1dbd9ccd1d7d6cbf8dfddccced7d1dbdddbd9caddc8cad796dbd7d5">[email&#160;protected]</a></span>
+          <span class="email-from"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ddb3b2a9b4bbb4bebca9b4b2b3ae9dbab8a9abb2b4beb8bebcafb8adafb2f3beb2b0">[email&#160;protected]</a></span>
         </div>
         <div class="email-body">
           <div class="email-subject">📬 New Voicemail Triage — Front Desk</div>
@@ -1353,7 +1379,7 @@
           <li>Clinic dashboard access</li>
           <li>1 unique forwarding address</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#80f3f5f0f0eff2f4c0e7e5f4f6efe9e3e5e3e1f2e5f0f2efaee3efedbff3f5e2eae5e3f4bdd3f4e1f2f4e5f2a0d0ece1eea0c9eef1f5e9f2f9" class="btn-pricing btn-pricing-ghost">Get Started</a>
+        <a href="/cdn-cgi/l/email-protection#f2818782829d8086b2959786849d9b91979193809782809ddc919d9fcd81879098979186cfa1869380869780d2a29e939cd2bb9c83879b808b" class="btn-pricing btn-pricing-ghost">Get Started</a>
       </div>
 
       <!-- Plus (featured) -->
@@ -1373,7 +1399,7 @@
           <li>Audio playback in dashboard</li>
           <li>Priority email support</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#8dfef8fdfde2fff9cdeae8f9fbe2e4eee8eeecffe8fdffe2a3eee2e0b2fef8efe7e8eef9b0dde1f8feaddde1ece3adc4e3fcf8e4fff4" class="btn-pricing btn-pricing-primary">Get Started</a>
+        <a href="/cdn-cgi/l/email-protection#c2b1b7b2b2adb0b682a5a7b6b4adaba1a7a1a3b0a7b2b0adeca1adaffdb1b7a0a8a7a1b6ff92aeb7b1e292aea3ace28bacb3b7abb0bb" class="btn-pricing btn-pricing-primary">Get Started</a>
       </div>
 
       <!-- Pro -->
@@ -1393,12 +1419,12 @@
           <li>Advanced filtering &amp; search</li>
           <li>Dedicated onboarding support</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#3a494f4a4a55484e7a5d5f4e4c5553595f595b485f4a48551459555705494f58505f594e076a48551a6a565b541a73544b4f534843" class="btn-pricing btn-pricing-ghost">Get Started</a>
+        <a href="/cdn-cgi/l/email-protection#5a292f2a2a35282e1a3d3f2e2c3533393f393b283f2a28357439353765292f38303f392e670a28357a0a363b347a13342b2f332823" class="btn-pricing btn-pricing-ghost">Get Started</a>
       </div>
     </div>
 
     <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin-top:24px;">
-      Questions about which plan fits your clinic? <a href="/cdn-cgi/l/email-protection#ea999f9a9a85989eaa8d8f9e9c8583898f898b988f9a9885c4898587" style="color:var(--teal);">Email us</a> and we'll help you choose.
+      Questions about which plan fits your clinic? <a href="/cdn-cgi/l/email-protection#ddaea8adadb2afa99dbab8a9abb2b4beb8bebcafb8adafb2f3beb2b0" style="color:var(--teal);">Email us</a> and we'll help you choose.
     </p>
   </div>
 </section>
@@ -1418,28 +1444,28 @@
           <div class="contact-icon">📧</div>
           <div class="contact-detail">
             <h4>General Support</h4>
-            <a href="mailto:support@getvoicecarepro.com" style="color:var(--teal);">support@getvoicecarepro.com</a>
+            <a href="/cdn-cgi/l/email-protection#30434540405f424470575544465f5953555351425540425f1e535f5d"><span class="__cf_email__" data-cfemail="fe8d8b8e8e918c8abe999b8a8891979d9b9d9f8c9b8e8c91d09d9193">[email&#160;protected]</span></a>
           </div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">💼</div>
           <div class="contact-detail">
             <h4>Sales &amp; Onboarding</h4>
-            <a href="mailto:mani@getvoicecarepro.com" style="color:var(--teal);">mani@getvoicecarepro.com</a>
+            <a href="/cdn-cgi/l/email-protection#2f424e41466f484a5b5940464c4a4c4e5d4a5f5d40014c4042"><span class="__cf_email__" data-cfemail="1479757a7d54737160627b7d77717775667164667b3a777b79">[email&#160;protected]</span></a>
           </div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">⏱</div>
           <div class="contact-detail">
             <h4>Response Time</h4>
-            <p>We typically respond in 24 hours.</p>
+            <p>We typically respond within 1 business day.</p>
           </div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">🔒</div>
           <div class="contact-detail">
             <h4>HIPAA &amp; Compliance Questions</h4>
-            <a href="mailto:support@getvoicecarepro.com" style="color:var(--teal);">support@getvoicecarepro.com</a>
+            <a href="/cdn-cgi/l/email-protection#e99a9c9999869b9da98e8c9d9f86808a8c8a889b8c999b86c78a8684"><span class="__cf_email__" data-cfemail="11626461617e636551767465677e7872747270637461637e3f727e7c">[email&#160;protected]</span></a>
           </div>
         </div>
       </div>
@@ -1485,16 +1511,16 @@
     <div class="footer-col">
       <h5>Contact</h5>
       <ul>
-        <li><a href="/cdn-cgi/l/email-protection#d3a0a6a3a3bca1a793b4b6a7a5bcbab0b6b0b2a1b6a3a1bcfdb0bcbe"><span class="__cf_email__" data-cfemail="fe8d8b8e8e918c8abe999b8a8891979d9b9d9f8c9b8e8c91d09d9193">[email&#160;protected]</span></a></li>
-        <li><a href="/cdn-cgi/l/email-protection#701d111e1930171504061f1913151311021500021f5e131f1d"><span class="__cf_email__" data-cfemail="bdd0dcd3d4fddad8c9cbd2d4ded8dedccfd8cdcfd293ded2d0">[email&#160;protected]</span></a></li>
+        <li><a href="/cdn-cgi/l/email-protection#e1929491918e9395a1868495978e8882848280938491938ecf828e8c"><span class="__cf_email__" data-cfemail="40333530302f323400272534362f2923252321322530322f6e232f2d">[email&#160;protected]</span></a></li>
+        <li><a href="/cdn-cgi/l/email-protection#a1ccc0cfc8e1c6c4d5d7cec8c2c4c2c0d3c4d1d3ce8fc2cecc"><span class="__cf_email__" data-cfemail="d5b8b4bbbc95b2b0a1a3babcb6b0b6b4a7b0a5a7bafbb6bab8">[email&#160;protected]</span></a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h5>Legal</h5>
       <ul>
-        <li><a href="{{ url_for('privacy') }}">Privacy Policy</a></li>
-        <li><a href="{{ url_for('terms') }}">Terms of Service</a></li>
-        <li><a href="{{ url_for('hipaa') }}">HIPAA Notice</a></li>
+        <li><a onclick="openPage('privacy')">Privacy Policy</a></li>
+        <li><a onclick="openPage('terms')">Terms of Service</a></li>
+        <li><a onclick="openPage('hipaa')">HIPAA Notice</a></li>
         <li><a onclick="openPage('refund')">Refund Policy</a></li>
       </ul>
     </div>
@@ -1502,14 +1528,162 @@
   <div class="footer-bottom">
     <p class="footer-copy">© 2025 VoiceCare Pro. All rights reserved.</p>
     <div class="footer-legal">
-      <a href="{{ url_for('privacy') }}">Privacy Policy</a>
-      <a href="{{ url_for('terms') }}">Terms of Service</a>
-      <a href="{{ url_for('hipaa') }}">HIPAA Notice</a>
+      <a onclick="openPage('privacy')">Privacy Policy</a>
+      <a onclick="openPage('terms')">Terms of Service</a>
+      <a onclick="openPage('hipaa')">HIPAA Notice</a>
     </div>
   </div>
 </footer>
 
 <!-- ─── LEGAL OVERLAYS ─── -->
+
+<!-- Privacy Policy -->
+<div class="page-overlay" id="page-privacy">
+  <button class="page-close" onclick="closePage('privacy')">✕</button>
+  <div class="page-inner">
+    <p class="section-label">Legal</p>
+    <h1 class="page-h1">Privacy Policy</h1>
+    <p class="page-meta">Last updated: January 1, 2025 &nbsp;|&nbsp; Effective: January 1, 2025</p>
+    <div class="legal-section">
+      <h2>1. Introduction</h2>
+      <p>VoiceCare Pro ("we," "us," or "our") is committed to protecting the privacy and security of the information entrusted to us by our customers. This Privacy Policy describes how we collect, use, disclose, and safeguard information when you use our voicemail triage platform at getvoicecarepro.com and related services (collectively, the "Service").</p>
+    </div>
+    <div class="legal-section">
+      <h2>2. Information We Collect</h2>
+      <p>We collect the following categories of information:</p>
+      <ul>
+        <li><strong>Account Information:</strong> Name, email address, clinic name, and billing information provided at registration.</li>
+        <li><strong>Voicemail Data:</strong> Audio files and transcriptions forwarded to your unique VoiceCare Pro email address by your clinic's phone system.</li>
+        <li><strong>AI-Generated Data:</strong> Summaries, extracted phone numbers, department classifications, and recommended actions generated from voicemail content.</li>
+        <li><strong>Usage Data:</strong> Log files, IP addresses, browser type, pages visited, and interaction data collected automatically.</li>
+        <li><strong>Communications:</strong> Emails or messages you send to our support team.</li>
+      </ul>
+    </div>
+    <div class="legal-section">
+      <h2>3. How We Use Your Information</h2>
+      <p>We use your information to provide, operate, and improve the Service; deliver AI-generated voicemail summaries via email; generate analytics and reporting within your dashboard; respond to support inquiries; process billing; and comply with legal obligations.</p>
+    </div>
+    <div class="legal-section">
+      <h2>4. HIPAA and Healthcare Data</h2>
+      <p>VoiceCare Pro processes voicemail data on behalf of healthcare providers. If your use of the Service involves Protected Health Information (PHI) as defined under the Health Insurance Portability and Accountability Act (HIPAA), we operate as a Business Associate. A Business Associate Agreement (BAA) is available upon request for eligible customers. We implement administrative, physical, and technical safeguards appropriate to the sensitivity of healthcare data.</p>
+    </div>
+    <div class="legal-section">
+      <h2>5. Data Sharing and Disclosure</h2>
+      <p>We do not sell your data. We may share data with: (a) service providers who assist in operating the Service under confidentiality obligations; (b) law enforcement when required by law; (c) successors in a merger or acquisition, with prior notice to you.</p>
+    </div>
+    <div class="legal-section">
+      <h2>6. Data Retention</h2>
+      <p>Voicemail data is retained for the duration of your active subscription and for up to 90 days following termination, after which it is securely deleted. You may request earlier deletion by contacting <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="51222421213e232511363425273e3832343230233421233e7f323e3c">[email&#160;protected]</a>.</p>
+    </div>
+    <div class="legal-section">
+      <h2>7. Security</h2>
+      <p>We use industry-standard encryption in transit (TLS) and at rest, access controls, and regular security reviews. No method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.</p>
+    </div>
+    <div class="legal-section">
+      <h2>8. Your Rights</h2>
+      <p>Depending on your jurisdiction, you may have rights to access, correct, delete, or port your personal data. To exercise any of these rights, contact us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f4878184849b8680b4939180829b9d97919795869184869bda979b99">[email&#160;protected]</a>.</p>
+    </div>
+    <div class="legal-section">
+      <h2>9. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. We will notify you of material changes via email or a prominent notice on the website at least 14 days before the changes take effect.</p>
+    </div>
+    <div class="legal-section">
+      <h2>10. Contact Us</h2>
+      <p>If you have questions about this Privacy Policy, please contact us at <a href="/cdn-cgi/l/email-protection#40333530302f323400272534362f2923252321322530322f6e232f2d" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="a3d0d6d3d3ccd1d7e3c4c6d7d5cccac0c6c0c2d1c6d3d1cc8dc0ccce">[email&#160;protected]</span></a>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Terms of Service -->
+<div class="page-overlay" id="page-terms">
+  <button class="page-close" onclick="closePage('terms')">✕</button>
+  <div class="page-inner">
+    <p class="section-label">Legal</p>
+    <h1 class="page-h1">Terms of Service</h1>
+    <p class="page-meta">Last updated: January 1, 2025 &nbsp;|&nbsp; Effective: January 1, 2025</p>
+    <div class="legal-section">
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing or using VoiceCare Pro ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. These Terms apply to all users, including individual subscribers and organizations.</p>
+    </div>
+    <div class="legal-section">
+      <h2>2. Description of Service</h2>
+      <p>VoiceCare Pro provides an AI-powered voicemail triage platform designed for healthcare organizations. The Service processes voicemail audio and transcriptions to generate structured summaries, caller data, department classifications, and recommended actions delivered by email and accessible via a web dashboard.</p>
+    </div>
+    <div class="legal-section">
+      <h2>3. Eligibility and Account Registration</h2>
+      <p>You must be at least 18 years old and authorized to bind your organization to these Terms to create an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
+    </div>
+    <div class="legal-section">
+      <h2>4. Acceptable Use</h2>
+      <p>You agree to use the Service only for lawful purposes and in compliance with all applicable federal and state laws, including HIPAA. You must not: (a) use the Service to process data you are not authorized to handle; (b) attempt to reverse-engineer or exploit the platform; (c) misrepresent the AI-generated output as medical advice or clinical decisions; (d) share your unique forwarding address publicly.</p>
+    </div>
+    <div class="legal-section">
+      <h2>5. Subscription and Billing</h2>
+      <p>Subscriptions are billed monthly in advance. Your subscription will automatically renew unless cancelled before the renewal date. We reserve the right to change pricing with 30 days' notice. Fees are non-refundable except as described in our Refund Policy. Voicemail overages beyond your plan limit may result in suspension or upsell prompts.</p>
+    </div>
+    <div class="legal-section">
+      <h2>6. AI-Generated Content Disclaimer</h2>
+      <p>AI-generated summaries, department suggestions, and recommended actions are provided for informational and operational efficiency purposes only. They do not constitute medical advice, clinical guidance, or legal advice. Your staff retains full responsibility for patient care decisions. You should verify critical patient information before taking action.</p>
+    </div>
+    <div class="legal-section">
+      <h2>7. Limitation of Liability</h2>
+      <p>To the fullest extent permitted by law, VoiceCare Pro shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the Service. Our total cumulative liability shall not exceed the fees paid by you in the three (3) months preceding the claim.</p>
+    </div>
+    <div class="legal-section">
+      <h2>8. Termination</h2>
+      <p>Either party may terminate the subscription at any time. Upon termination, your access to the Service will cease at the end of the current billing period. We may suspend or terminate accounts that violate these Terms immediately and without notice.</p>
+    </div>
+    <div class="legal-section">
+      <h2>9. Governing Law</h2>
+      <p>These Terms shall be governed by the laws of the State of Virginia, without regard to its conflict of law provisions. Any disputes shall be resolved in the courts of Virginia.</p>
+    </div>
+    <div class="legal-section">
+      <h2>10. Contact</h2>
+      <p>For legal inquiries: <a href="/cdn-cgi/l/email-protection#9be8eeebebf4e9efdbfcfeefedf4f2f8fef8fae9feebe9f4b5f8f4f6" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="e2919792928d9096a2858796948d8b81878183908792908dcc818d8f">[email&#160;protected]</span></a></p>
+    </div>
+  </div>
+</div>
+
+<!-- HIPAA Notice -->
+<div class="page-overlay" id="page-hipaa">
+  <button class="page-close" onclick="closePage('hipaa')">✕</button>
+  <div class="page-inner">
+    <p class="section-label">Legal</p>
+    <h1 class="page-h1">HIPAA Compliance Notice</h1>
+    <p class="page-meta">Last updated: January 1, 2025</p>
+    <div class="legal-section">
+      <h2>Our Role Under HIPAA</h2>
+      <p>VoiceCare Pro recognizes that healthcare providers using our platform may transmit voicemails containing Protected Health Information (PHI) as defined under the Health Insurance Portability and Accountability Act of 1996 (HIPAA) and its implementing regulations. In such cases, VoiceCare Pro acts as a Business Associate to your Covered Entity.</p>
+    </div>
+    <div class="legal-section">
+      <h2>Business Associate Agreement (BAA)</h2>
+      <p>A Business Associate Agreement is available to all VoiceCare Pro customers whose use of the Service involves PHI. To request a BAA, contact us at <a href="/cdn-cgi/l/email-protection#e0939590908f9294a0878594968f8983858381928590928fce838f8d" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="cebdbbbebea1bcba8ea9abbab8a1a7adabadafbcabbebca1e0ada1a3">[email&#160;protected]</span></a>. You should not use VoiceCare Pro to process PHI until a BAA is executed between your organization and VoiceCare Pro.</p>
+    </div>
+    <div class="legal-section">
+      <h2>Safeguards We Implement</h2>
+      <ul>
+        <li>Encryption in transit (TLS 1.2+) for all data transmissions</li>
+        <li>Encryption at rest for stored voicemail audio and transcriptions</li>
+        <li>Role-based access controls limiting staff access to relevant data</li>
+        <li>Audit logs for data access and system events</li>
+        <li>Automatic data deletion protocols following account termination</li>
+        <li>Employee training on data privacy and security</li>
+      </ul>
+    </div>
+    <div class="legal-section">
+      <h2>Minimum Necessary Standard</h2>
+      <p>VoiceCare Pro's AI is designed to extract only the minimum information necessary to produce actionable summaries. We do not store or transmit PHI beyond what is required to deliver the Service.</p>
+    </div>
+    <div class="legal-section">
+      <h2>Breach Notification</h2>
+      <p>In the event of a discovered breach of unsecured PHI, VoiceCare Pro will notify affected Covered Entities in accordance with the HIPAA Breach Notification Rule (45 CFR Part 164, Subpart D) within the timeframes required by law.</p>
+    </div>
+    <div class="legal-section">
+      <h2>Contact for Compliance Questions</h2>
+      <p>For HIPAA-related inquiries: <a href="/cdn-cgi/l/email-protection#cbb8bebbbba4b9bf8bacaebfbda4a2a8aea8aab9aebbb9a4e5a8a4a6" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="23505653534c515763444657554c4a40464042514653514c0d404c4e">[email&#160;protected]</span></a></p>
+    </div>
+  </div>
+</div>
 
 <!-- Refund Policy -->
 <div class="page-overlay" id="page-refund">
@@ -1532,13 +1706,13 @@
     </div>
     <div class="legal-section">
       <h2>How to Request a Refund</h2>
-      <p>To request a refund, email <a href="/cdn-cgi/l/email-protection#9cefe9ececf3eee8dcfbf9e8eaf3f5fff9fffdeef9eceef3b2fff3f1" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="26555356564954526641435250494f4543454754435654490845494b">[email&#160;protected]</span></a> with your account email, the charge date, and the reason for your request. We will review and respond within 5 business days.</p>
+      <p>To request a refund, email <a href="mailto:support@getvoicecarepro.com" style="color:var(--teal);">support@getvoicecarepro.com</a> with your account email, the charge date, and the reason for your request. We will review and respond within 5 business days.</p>
     </div>
   </div>
 </div>
 
 <!-- ─── SCRIPTS ─── -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
   // Smooth scroll
   function scrollTo(id) {
     document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
