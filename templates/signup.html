@@ -1,123 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - VoiceCare Pro</title>
-  <style>
-    /* General Reset */
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceCare Pro — Sign Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b1930;
+    --navy-mid: #112244;
+    --teal: #00bfa6;
+    --teal-soft: #00d4b8;
+    --teal-dim: rgba(0,191,166,0.12);
+    --white: #f8fafc;
+    --muted: #8fa3b8;
+    --border: rgba(255,255,255,0.07);
+    --card: rgba(255,255,255,0.04);
+    --radius: 16px;
+  }
 
-    body {
-      background: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .signup-container {
-      background: #fff;
-      padding: 2.5rem 3rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 25px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
+  html { font-size: 16px; }
 
-    h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: #333;
-    }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
 
-    /* Flashed messages */
-    .flash-container {
-      margin-bottom: 1rem;
-    }
-    .flash-message {
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.95rem;
-    }
-    .flash-message.error {
-      background-color: #f8d7da;
-      color: #842029;
-    }
-    .flash-message.success {
-      background-color: #d1e7dd;
-      color: #0f5132;
-    }
+  /* ─── NOISE TEXTURE ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
 
-    form label {
-      display: block;
-      margin-bottom: 0.25rem;
-      color: #555;
-      font-weight: 500;
-      margin-top: 1rem;
-    }
+  /* ─── GLOW ─── */
+  .page-glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,191,166,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    pointer-events: none;
+    z-index: 0;
+    animation: pulseGlow 6s ease-in-out infinite;
+  }
 
-    form input {
-      width: 100%;
-      padding: 0.65rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      transition: all 0.2s ease-in-out;
-    }
-    form input:focus {
-      outline: none;
-      border-color: #4a90e2;
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-    }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -55%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -55%) scale(1.08); }
+  }
 
-    form button {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: #4a90e2;
-      color: #fff;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 1rem;
-      transition: background-color 0.2s ease;
-    }
-    form button:hover {
-      background-color: #357ab7;
-    }
+  /* ─── GRID BG ─── */
+  .page-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,191,166,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,191,166,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 100%);
+    pointer-events: none;
+  }
 
-    .login-link {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    .login-link a {
-      color: #4a90e2;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .login-link a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  /* ─── NAV ─── */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 60px;
+    background: rgba(11,25,48,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.4rem; color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo-icon {
+    width: 34px; height: 34px;
+    background: var(--teal);
+    border-radius: 9px;
+    display: grid; place-items: center;
+    font-size: 16px;
+  }
+
+  .nav-right {
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  .nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+
+  .nav-link:hover { color: var(--white); }
+
+  .nav-btn-outline {
+    color: var(--teal);
+    font-weight: 500;
+    font-size: 0.88rem;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,191,166,0.4);
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+
+  .nav-btn-outline:hover {
+    background: var(--teal-dim);
+    border-color: var(--teal);
+    transform: translateY(-1px);
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  main {
+    position: relative; z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+  }
+
+  /* ─── CARD ─── */
+  .auth-card {
+    width: 100%;
+    max-width: 460px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: var(--radius);
+    padding: 48px 44px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  }
+
+  /* ─── CARD HEADER ─── */
+  .auth-icon {
+    width: 48px; height: 48px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(0,191,166,0.25);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .auth-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .auth-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+
+  .auth-sub {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 32px;
+  }
+
+  /* ─── TRUST BADGES ─── */
+  .trust-row {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .trust-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(0,191,166,0.2);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    color: var(--teal);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── FLASH MESSAGES ─── */
+  .flash-container { margin-bottom: 24px; }
+
+  .flash-message {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+
+  .flash-message.error {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.25);
+    color: #fca5a5;
+  }
+
+  .flash-message.success {
+    background: rgba(0,191,166,0.1);
+    border: 1px solid rgba(0,191,166,0.25);
+    color: var(--teal);
+  }
+
+  /* ─── FORM ─── */
+  .form-group {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .form-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--white);
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+    width: 100%;
+  }
+
+  .form-input:focus {
+    border-color: rgba(0,191,166,0.5);
+    background: rgba(0,191,166,0.04);
+  }
+
+  .form-input::placeholder { color: rgba(143,163,184,0.35); }
+
+  .form-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* ─── SUBMIT ─── */
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--teal);
+    color: var(--navy);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 0 0 rgba(0,191,166,0.4);
+    animation: pulseBtn 3s ease infinite 1.5s;
+  }
+
+  @keyframes pulseBtn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,191,166,0.4); }
+    50%       { box-shadow: 0 0 0 10px rgba(0,191,166,0); }
+  }
+
+  .btn-submit:hover { background: var(--teal-soft); transform: translateY(-1px); }
+
+  /* ─── TERMS NOTE ─── */
+  .terms-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  .terms-note a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s;
+  }
+
+  .terms-note a:hover { color: var(--white); }
+
+  /* ─── DIVIDER ─── */
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── SWITCH LINK ─── */
+  .auth-switch {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .auth-switch a {
+    color: var(--teal);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .auth-switch a:hover { color: var(--teal-soft); }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .auth-card { padding: 36px 24px; }
+    .trust-row { gap: 10px; }
+  }
+</style>
 </head>
 <body>
-  <div class="signup-container">
-    <h2>Create Your Account</h2>
 
-    <!-- Flashed messages -->
+<div class="page-glow"></div>
+<div class="page-grid"></div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-icon">🎙</div>
+    VoiceCare Pro
+  </a>
+  <div class="nav-right">
+    <a href="/" class="nav-link">Home</a>
+    <a href="{{ url_for('login') }}" class="nav-btn-outline">Log In</a>
+  </div>
+</nav>
+
+<!-- ─── MAIN ─── -->
+<main>
+  <div class="auth-card">
+
+    <p class="auth-label">Get started free</p>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Set up your clinic in minutes. No credit card required to start your free trial.</p>
+
+    <div class="trust-row">
+      <span class="trust-badge">✓ HIPAA-ready</span>
+      <span class="trust-badge">✓ Free trial</span>
+      <span class="trust-badge">✓ Cancel anytime</span>
+    </div>
+
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-container">
           {% for category, message in messages %}
             <div class="flash-message {{ category }}">
-              {% if category == 'error' %}&#9888;{% elif category == 'success' %}&#10003;{% endif %}
+              {% if category == 'error' %}⚠{% elif category == 'success' %}✓{% endif %}
               {{ message }}
             </div>
           {% endfor %}
@@ -125,23 +407,42 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Signup Form -->
     <form method="POST" action="{{ url_for('signup') }}">
-      <label for="clinic_name">Clinic Name</label>
-      <input type="text" name="clinic_name" id="clinic_name" placeholder="Enter your clinic name" required>
 
-      <label for="email">Email</label>
-      <input type="email" name="email" id="email" placeholder="Enter your email" required>
+      <div class="form-group">
+        <label class="form-label" for="clinic_name">Clinic Name</label>
+        <input class="form-input" type="text" name="clinic_name" id="clinic_name" placeholder="e.g. Riverside Family Practice" required>
+      </div>
 
-      <label for="password">Password</label>
-      <input type="password" name="password" id="password" placeholder="Create a password" required>
+      <div class="form-group">
+        <label class="form-label" for="email">Work Email</label>
+        <input class="form-input" type="email" name="email" id="email" placeholder="jane@yourclinic.com" required>
+      </div>
 
-      <button type="submit">Sign Up</button>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" name="password" id="password" placeholder="Create a strong password" required>
+        <span class="form-hint">Minimum 8 characters recommended.</span>
+      </div>
+
+      <button type="submit" class="btn-submit">Create Account →</button>
+
+      <p class="terms-note">
+        By signing up you agree to our
+        <a href="/privacy.html">Privacy Policy</a> and
+        <a href="/terms.html">Terms of Service</a>.
+      </p>
+
     </form>
 
-    <div class="login-link">
-      Already have an account? <a href="{{ url_for('login') }}">Log in</a>
-    </div>
+    <div class="auth-divider">already have an account?</div>
+
+    <p class="auth-switch">
+      <a href="{{ url_for('login') }}">Log in to your dashboard →</a>
+    </p>
+
   </div>
+</main>
+
 </body>
 </html>
