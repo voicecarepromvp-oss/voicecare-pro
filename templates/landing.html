@@ -4,1347 +4,456 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VoiceCare Pro — AI Voicemail Triage for Healthcare</title>
+<meta name="description" content="VoiceCare Pro uses AI to automatically triage, summarize and route clinic voicemails — so your staff spends time on patients, not messages.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy: #0b1930;
-    --navy-mid: #112244;
-    --teal: #00bfa6;
-    --teal-soft: #00d4b8;
-    --teal-dim: rgba(0,191,166,0.12);
-    --white: #f8fafc;
-    --muted: #8fa3b8;
-    --border: rgba(255,255,255,0.07);
-    --card: rgba(255,255,255,0.04);
-    --card-hover: rgba(0,191,166,0.07);
-    --radius: 16px;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; font-size: 16px; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--navy);
-    color: var(--white);
-    overflow-x: hidden;
-    cursor: default;
-  }
-
-  /* ─── NOISE TEXTURE OVERLAY ─── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0; opacity: 0.4;
-  }
-
-  /* ─── NAV ─── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 60px;
-    background: rgba(11,25,48,0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    transition: padding 0.3s;
-  }
-
-  .nav-logo {
-    display: flex; align-items: center; gap: 10px;
-    font-family: 'Instrument Serif', serif;
-    font-size: 1.4rem; color: var(--white);
-    text-decoration: none;
-  }
-
-  .nav-logo-icon {
-    width: 34px; height: 34px;
-    background: var(--teal);
-    border-radius: 9px;
-    display: grid; place-items: center;
-    font-size: 16px;
-  }
-
-  .nav-links {
-    display: flex; gap: 36px; list-style: none;
-  }
-
-  .nav-links a {
-    color: var(--muted); text-decoration: none;
-    font-size: 0.9rem; font-weight: 400;
-    transition: color 0.2s;
-    cursor: pointer;
-  }
-
-  .nav-links a:hover { color: var(--white); }
-
-  .nav-cta {
-    background: var(--teal);
-    color: var(--navy) !important;
-    font-weight: 500 !important;
-    padding: 10px 22px;
-    border-radius: 8px;
-    transition: background 0.2s, transform 0.2s !important;
-  }
-
-  .nav-cta:hover {
-    background: var(--teal-soft) !important;
-    color: var(--navy) !important;
-    transform: translateY(-1px);
-  }
-
-  .nav-login {
-    color: var(--muted) !important;
-    font-weight: 400 !important;
-    transition: color 0.2s !important;
-  }
-
-  .nav-login:hover { color: var(--white) !important; }
-
-  .nav-signup {
-    background: transparent;
-    color: var(--teal) !important;
-    font-weight: 500 !important;
-    padding: 8px 18px;
-    border-radius: 8px;
-    border: 1px solid rgba(0,191,166,0.4);
-    transition: background 0.2s, border-color 0.2s, transform 0.2s !important;
-  }
-
-  .nav-signup:hover {
-    background: var(--teal-dim) !important;
-    border-color: var(--teal) !important;
-    color: var(--teal) !important;
-    transform: translateY(-1px);
-  }
-
-  /* ─── HERO ─── */
-  #home {
-    min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 120px 60px 80px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-glow {
-    position: absolute;
-    width: 700px; height: 700px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,191,166,0.15) 0%, transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -60%);
-    pointer-events: none;
-    animation: pulseGlow 6s ease-in-out infinite;
-  }
-
-  @keyframes pulseGlow {
-    0%, 100% { opacity: 0.7; transform: translate(-50%, -60%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -60%) scale(1.08); }
-  }
-
-  .hero-grid-bg {
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(0,191,166,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,191,166,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
-    pointer-events: none;
-  }
-
-  .hero-content {
-    position: relative; z-index: 1;
-    max-width: 820px; text-align: center;
-  }
-
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: var(--teal-dim);
-    border: 1px solid rgba(0,191,166,0.25);
-    border-radius: 100px;
-    padding: 6px 16px;
-    font-size: 0.78rem;
-    color: var(--teal);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-bottom: 28px;
-    opacity: 0;
-    animation: fadeUp 0.6s ease forwards 0.2s;
-  }
-
-  .badge-dot {
-    width: 6px; height: 6px;
-    background: var(--teal);
-    border-radius: 50%;
-    animation: blinkDot 2s infinite;
-  }
-
-  @keyframes blinkDot {
-    0%, 100% { opacity: 1; } 50% { opacity: 0.2; }
-  }
-
-  .hero-h1 {
-    font-family: 'Instrument Serif', serif;
-    font-size: clamp(2.8rem, 6vw, 5.2rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    margin-bottom: 24px;
-    opacity: 0;
-    animation: fadeUp 0.7s ease forwards 0.4s;
-  }
-
-  .hero-h1 em {
-    font-style: italic;
-    color: var(--teal);
-  }
-
-  .hero-sub {
-    font-size: 1.15rem;
-    color: var(--muted);
-    line-height: 1.7;
-    max-width: 600px;
-    margin: 0 auto 40px;
-    font-weight: 300;
-    opacity: 0;
-    animation: fadeUp 0.7s ease forwards 0.6s;
-  }
-
-  .hero-actions {
-    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeUp 0.7s ease forwards 0.8s;
-  }
-
-  .btn-primary {
-    background: var(--teal);
-    color: var(--navy);
-    padding: 15px 32px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: 'DM Sans', sans-serif;
-    box-shadow: 0 0 0 0 rgba(0,191,166,0.4);
-    animation: pulseBtn 3s ease infinite 2s;
-  }
-
-  @keyframes pulseBtn {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(0,191,166,0.4); }
-    50% { box-shadow: 0 0 0 12px rgba(0,191,166,0); }
-  }
-
-  .btn-primary:hover { background: var(--teal-soft); transform: translateY(-2px); }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--white);
-    padding: 15px 32px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 400;
-    text-decoration: none;
-    border: 1px solid var(--border);
-    transition: border-color 0.2s, transform 0.2s;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-2px); }
-
-  /* ─── VOICEMAIL CARD DEMO ─── */
-  .hero-demo {
-    margin-top: 70px;
-    position: relative; z-index: 1;
-    opacity: 0;
-    animation: fadeUp 0.9s ease forwards 1s;
-  }
-
-  .demo-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-
-  .demo-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 32px;
-    max-width: 560px;
-    margin: 0 auto;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .demo-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--teal), transparent);
-  }
-
-  .demo-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
-  .demo-title {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-  }
-
-  .demo-status {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(0,191,166,0.12);
-    border: 1px solid rgba(0,191,166,0.2);
-    border-radius: 100px;
-    padding: 3px 10px;
-    font-size: 0.7rem;
-    color: var(--teal);
-    font-weight: 500;
-  }
-
-  .demo-rows { display: flex; flex-direction: column; gap: 12px; }
-
-  .demo-row {
-    display: flex; align-items: flex-start; gap: 14px;
-  }
-
-  .demo-key {
-    font-size: 0.75rem;
-    color: var(--muted);
-    min-width: 130px;
-    font-weight: 400;
-    padding-top: 1px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .demo-val {
-    font-size: 0.88rem;
-    color: var(--white);
-    font-weight: 400;
-    line-height: 1.5;
-  }
-
-  .demo-val.highlight {
-    color: var(--teal);
-    font-weight: 500;
-  }
-
-  .demo-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 0;
-  }
-
-  /* ─── SECTION BASE ─── */
-  section { padding: 100px 60px; position: relative; }
-
-  .section-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--teal);
-    font-weight: 500;
-    margin-bottom: 12px;
-  }
-
-  .section-h2 {
-    font-family: 'Instrument Serif', serif;
-    font-size: clamp(2rem, 4vw, 3.2rem);
-    line-height: 1.15;
-    margin-bottom: 18px;
-  }
-
-  .section-sub {
-    color: var(--muted);
-    font-size: 1.05rem;
-    line-height: 1.7;
-    max-width: 560px;
-    font-weight: 300;
-  }
-
-  .centered { text-align: center; }
-  .centered .section-sub { margin: 0 auto; }
-
-  /* ─── HOW IT WORKS ─── */
-  #how {
-    background: rgba(255,255,255,0.015);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 2px;
-    margin-top: 60px;
-  }
-
-  .step-card {
-    padding: 40px 32px;
-    background: var(--card);
-    position: relative;
-    transition: background 0.3s;
-  }
-
-  .step-card:hover { background: var(--card-hover); }
-
-  .step-card:first-child { border-radius: var(--radius) 0 0 var(--radius); }
-  .step-card:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
-
-  .step-num {
-    font-family: 'Instrument Serif', serif;
-    font-size: 3.5rem;
-    color: rgba(0,191,166,0.15);
-    line-height: 1;
-    margin-bottom: 20px;
-    font-style: italic;
-  }
-
-  .step-icon {
-    width: 44px; height: 44px;
-    background: var(--teal-dim);
-    border: 1px solid rgba(0,191,166,0.2);
-    border-radius: 10px;
-    display: grid; place-items: center;
-    font-size: 20px;
-    margin-bottom: 18px;
-  }
-
-  .step-h3 {
-    font-size: 1.05rem;
-    font-weight: 500;
-    margin-bottom: 10px;
-  }
-
-  .step-p {
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.65;
-    font-weight: 300;
-  }
-
-  /* ─── FEATURES ─── */
-  #features { max-width: 1200px; margin: 0 auto; }
-
-  .features-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-    margin-top: 70px;
-  }
-
-  .features-layout.reverse { direction: rtl; }
-  .features-layout.reverse > * { direction: ltr; }
-
-  .feature-visual {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .feature-visual::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0,191,166,0.4), transparent);
-  }
-
-  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 20px; }
-
-  .feature-item {
-    display: flex; gap: 16px; align-items: flex-start;
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: opacity 0.5s, transform 0.5s;
-  }
-
-  .feature-item.visible { opacity: 1; transform: translateX(0); }
-
-  .feature-icon {
-    width: 36px; height: 36px; flex-shrink: 0;
-    background: var(--teal-dim);
-    border-radius: 8px;
-    display: grid; place-items: center;
-    font-size: 16px;
-    margin-top: 2px;
-  }
-
-  .feature-text h4 {
-    font-size: 0.95rem;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-
-  .feature-text p {
-    font-size: 0.85rem;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  /* ─── EMAIL PREVIEW ─── */
-  .email-preview {
-    background: #ffffff;
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.3);
-  }
-
-  .email-header {
-    background: #f0fdf9;
-    padding: 16px 20px;
-    display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid #e5f5f0;
-  }
-
-  .email-dots { display: flex; gap: 6px; }
-
-  .email-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-  }
-
-  .email-dot:nth-child(1) { background: #ff5f57; }
-  .email-dot:nth-child(2) { background: #ffbd2e; }
-  .email-dot:nth-child(3) { background: #28c840; }
-
-  .email-from {
-    font-size: 0.72rem;
-    color: #666;
-    font-family: monospace;
-    margin-left: auto;
-  }
-
-  .email-body { padding: 24px; }
-
-  .email-subject {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #111;
-    margin-bottom: 16px;
-  }
-
-  .email-field {
-    display: flex; gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.78rem;
-  }
-
-  .email-field:last-child { border-bottom: none; }
-
-  .email-field-key {
-    color: #888;
-    min-width: 140px;
-    font-weight: 500;
-  }
-
-  .email-field-val {
-    color: #111;
-  }
-
-  .email-field-val.em {
-    color: #00897b;
-    font-weight: 600;
-  }
-
-  /* ─── PROOF / STATS ─── */
-  #proof {
-    background: rgba(0,191,166,0.03);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1px;
-    background: var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-top: 60px;
-  }
-
-  .stat-box {
-    background: var(--navy);
-    padding: 44px 36px;
-    transition: background 0.3s;
-  }
-
-  .stat-box:hover { background: var(--card-hover); }
-
-  .stat-num {
-    font-family: 'Instrument Serif', serif;
-    font-size: 3.2rem;
-    color: var(--teal);
-    line-height: 1;
-    margin-bottom: 8px;
-    font-style: italic;
-  }
-
-  .stat-label {
-    font-size: 0.88rem;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 50px;
-  }
-
-  .testimonial-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    position: relative;
-    transition: border-color 0.3s, transform 0.3s;
-  }
-
-  .testimonial-card:hover {
-    border-color: rgba(0,191,166,0.2);
-    transform: translateY(-4px);
-  }
-
-  .testimonial-quote {
-    font-size: 0.92rem;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-bottom: 20px;
-    font-style: italic;
-    font-weight: 300;
-  }
-
-  .testimonial-author {
-    display: flex; align-items: center; gap: 12px;
-  }
-
-  .author-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: var(--teal-dim);
-    border: 1px solid rgba(0,191,166,0.2);
-    display: grid; place-items: center;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-
-  .author-name {
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-
-  .author-role {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-
-  /* ─── PRICING ─── */
-  #pricing { max-width: 1100px; margin: 0 auto; }
-
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-top: 60px;
-  }
-
-  .pricing-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 36px 32px;
-    position: relative;
-    transition: transform 0.3s, border-color 0.3s;
-  }
-
-  .pricing-card:hover { transform: translateY(-6px); }
-
-  .pricing-card.featured {
-    border-color: rgba(0,191,166,0.4);
-    background: rgba(0,191,166,0.06);
-  }
-
-  .pricing-card.featured::before {
-    content: 'Most Popular';
-    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-    background: var(--teal);
-    color: var(--navy);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 100px;
-  }
-
-  .pricing-name {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-
-  .pricing-price {
-    display: flex; align-items: flex-end; gap: 4px;
-    margin-bottom: 6px;
-  }
-
-  .pricing-amount {
-    font-family: 'Instrument Serif', serif;
-    font-size: 3rem;
-    line-height: 1;
-    color: var(--white);
-  }
-
-  .pricing-period {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-
-  .pricing-volume {
-    font-size: 0.82rem;
-    color: var(--teal);
-    font-weight: 500;
-    margin-bottom: 28px;
-  }
-
-  .pricing-divider {
-    height: 1px;
-    background: var(--border);
-    margin-bottom: 24px;
-  }
-
-  .pricing-features {
-    list-style: none;
-    display: flex; flex-direction: column; gap: 12px;
-    margin-bottom: 32px;
-  }
-
-  .pricing-features li {
-    display: flex; gap: 10px; align-items: center;
-    font-size: 0.88rem;
-    color: var(--muted);
-  }
-
-  .pricing-features li::before {
-    content: '✓';
-    color: var(--teal);
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .btn-pricing {
-    width: 100%;
-    padding: 13px;
-    border-radius: 9px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-    text-align: center;
-    text-decoration: none;
-    display: block;
-  }
-
-  .btn-pricing-ghost {
-    background: transparent;
-    color: var(--white);
-    border: 1px solid var(--border);
-  }
-
-  .btn-pricing-ghost:hover { border-color: rgba(255,255,255,0.25); }
-
-  .btn-pricing-primary {
-    background: var(--teal);
-    color: var(--navy);
-  }
-
-  .btn-pricing-primary:hover { background: var(--teal-soft); }
-
-  /* ─── CONTACT ─── */
-  #contact {
-    background: rgba(255,255,255,0.015);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .contact-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: start;
-    margin-top: 60px;
-  }
-
-  .contact-info { display: flex; flex-direction: column; gap: 24px; }
-
-  .contact-item {
-    display: flex; gap: 16px; align-items: flex-start;
-  }
-
-  .contact-icon {
-    width: 44px; height: 44px; flex-shrink: 0;
-    background: var(--teal-dim);
-    border: 1px solid rgba(0,191,166,0.15);
-    border-radius: 10px;
-    display: grid; place-items: center;
-    font-size: 18px;
-  }
-
-  .contact-detail h4 {
-    font-size: 0.88rem;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-
-  .contact-detail a, .contact-detail p {
-    font-size: 0.85rem;
-    color: var(--teal);
-    text-decoration: none;
-  }
-
-  .contact-form { display: flex; flex-direction: column; gap: 16px; }
-
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-
-  .form-label {
-    font-size: 0.78rem;
-    color: var(--muted);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .form-input, .form-textarea {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 13px 16px;
-    color: var(--white);
-    font-size: 0.9rem;
-    font-family: 'DM Sans', sans-serif;
-    transition: border-color 0.2s;
-    outline: none;
-    resize: none;
-  }
-
-  .form-input:focus, .form-textarea:focus {
-    border-color: rgba(0,191,166,0.4);
-  }
-
-  .form-input::placeholder, .form-textarea::placeholder {
-    color: rgba(143,163,184,0.4);
-  }
-
-  /* ─── LEGAL PAGES ─── */
-  .page-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(11,25,48,0.97);
-    overflow-y: auto;
-    padding: 60px;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  .page-overlay.active { display: block; }
-
-  .page-inner {
-    max-width: 800px; margin: 0 auto;
-  }
-
-  .page-close {
-    position: fixed; top: 28px; right: 40px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--white);
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 20px;
-    cursor: pointer;
-    transition: background 0.2s;
-    z-index: 210;
-  }
-
-  .page-close:hover { background: rgba(255,255,255,0.1); }
-
-  .page-h1 {
-    font-family: 'Instrument Serif', serif;
-    font-size: 2.6rem;
-    margin-bottom: 8px;
-  }
-
-  .page-meta {
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-bottom: 48px;
-  }
-
-  .legal-section { margin-bottom: 40px; }
-
-  .legal-section h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--teal);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 12px;
-  }
-
-  .legal-section p, .legal-section li {
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.75;
-  }
-
-  .legal-section ul {
-    list-style: disc; padding-left: 20px;
-    display: flex; flex-direction: column; gap: 6px;
-  }
-
-  /* ─── FOOTER ─── */
-  footer {
-    padding: 60px;
-    border-top: 1px solid var(--border);
-  }
-
-  .footer-inner {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 60px;
-    margin-bottom: 48px;
-  }
-
-  .footer-logo {
-    display: flex; align-items: center; gap: 10px;
-    font-family: 'Instrument Serif', serif;
-    font-size: 1.25rem; color: var(--white);
-    text-decoration: none; margin-bottom: 14px;
-  }
-
-  .footer-desc {
-    font-size: 0.85rem;
-    color: var(--muted);
-    line-height: 1.7;
-    max-width: 280px;
-  }
-
-  .footer-col h5 {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .footer-col ul {
-    list-style: none;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-
-  .footer-col a {
-    font-size: 0.88rem;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.2s;
-    cursor: pointer;
-  }
-
-  .footer-col a:hover { color: var(--white); }
-
-  .footer-bottom {
-    display: flex; align-items: center; justify-content: space-between;
-    padding-top: 28px;
-    border-top: 1px solid var(--border);
-  }
-
-  .footer-copy {
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-
-  .footer-legal {
-    display: flex; gap: 24px;
-  }
-
-  .footer-legal a {
-    font-size: 0.8rem;
-    color: var(--muted);
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-
-  .footer-legal a:hover { color: var(--white); }
-
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .reveal {
-    opacity: 0; transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-
-  .reveal.visible { opacity: 1; transform: translateY(0); }
-
-  /* ─── MOBILE ─── */
-  @media (max-width: 900px) {
-    nav { padding: 16px 24px; }
-    .nav-links { display: none; }
-    section { padding: 80px 24px; }
-    #home { padding: 100px 24px 60px; }
-    .features-layout, .contact-layout, .pricing-grid {
-      grid-template-columns: 1fr;
-    }
-    .features-layout.reverse { direction: ltr; }
-    footer { padding: 40px 24px; }
-    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
-    .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
-    .page-overlay { padding: 80px 24px 40px; }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0a7c6b;
+  --teal-light:#e6f4f1;
+  --teal-mid:#1aaa91;
+  --teal-dark:#065a4d;
+  --navy:#0c1824;
+  --navy2:#152233;
+  --slate:#5a7080;
+  --border:#d4e0dd;
+  --white:#ffffff;
+  --off:#f7faf9;
+  --text:#1a2e28;
+  --muted:#6b8c82;
+  --accent:#ff6b35;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'Bricolage Grotesque',sans-serif;color:var(--text);background:var(--white);overflow-x:hidden;line-height:1.6}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 2rem;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);transition:box-shadow 0.3s}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-logo{font-family:'Instrument Serif',serif;font-size:22px;color:var(--teal-dark);display:flex;align-items:center;gap:8px}
+.nav-logo svg{width:28px;height:28px}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;font-weight:400;color:var(--slate);transition:color 0.2s}
+.nav-links a:hover{color:var(--teal)}
+.nav-cta{background:var(--teal);color:white;font-size:14px;font-weight:500;padding:9px 22px;border-radius:100px;transition:background 0.2s,transform 0.15s}
+.nav-cta:hover{background:var(--teal-dark);transform:translateY(-1px)}
+.nav-mobile{display:none;cursor:pointer;flex-direction:column;gap:5px}
+.nav-mobile span{width:22px;height:2px;background:var(--text);display:block;transition:0.3s}
+
+/* HERO */
+.hero{padding:140px 2rem 80px;background:var(--navy);color:white;position:relative;overflow:hidden;min-height:92vh;display:flex;align-items:center}
+.hero-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18}
+.hero-orb1{width:600px;height:600px;background:var(--teal-mid);top:-200px;right:-100px;animation:float1 8s ease-in-out infinite}
+.hero-orb2{width:400px;height:400px;background:#1a6a9a;bottom:-100px;left:-100px;animation:float2 10s ease-in-out infinite}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,20px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+.hero-inner{max-width:1100px;margin:0 auto;position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:100px;border:1px solid rgba(26,170,145,0.4);color:var(--teal-mid);background:rgba(26,170,145,0.08);margin-bottom:1.5rem;animation:fadeUp 0.6s ease both}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal-mid);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+.hero h1{font-family:'Instrument Serif',serif;font-size:clamp(36px,4.5vw,58px);font-weight:400;line-height:1.1;letter-spacing:-0.5px;margin-bottom:1.25rem;animation:fadeUp 0.7s 0.1s ease both}
+.hero h1 em{font-style:italic;color:var(--teal-mid)}
+.hero-sub{font-size:17px;font-weight:300;color:rgba(255,255,255,0.65);max-width:460px;margin-bottom:2rem;line-height:1.7;animation:fadeUp 0.7s 0.2s ease both}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;animation:fadeUp 0.7s 0.3s ease both}
+.btn-primary{background:var(--teal-mid);color:white;padding:13px 30px;border-radius:100px;font-size:15px;font-weight:500;border:none;cursor:pointer;transition:all 0.2s;display:inline-block}
+.btn-primary:hover{background:var(--teal);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,170,145,0.35)}
+.btn-outline{color:white;padding:13px 30px;border-radius:100px;font-size:15px;font-weight:400;border:1px solid rgba(255,255,255,0.2);cursor:pointer;transition:all 0.2s;display:inline-block;background:transparent}
+.btn-outline:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.4)}
+.hero-trust{margin-top:2rem;display:flex;align-items:center;gap:12px;font-size:13px;color:rgba(255,255,255,0.4);animation:fadeUp 0.7s 0.4s ease both}
+.trust-divider{width:1px;height:14px;background:rgba(255,255,255,0.15)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* EMAIL CARD (hero right) */
+.hero-visual{animation:fadeUp 0.8s 0.3s ease both}
+.email-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.5rem;backdrop-filter:blur(10px)}
+.email-header{display:flex;align-items:center;gap:10px;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:1rem}
+.email-from{font-size:11px;color:rgba(255,255,255,0.4);line-height:1.4}
+.email-from strong{display:block;font-size:13px;color:rgba(255,255,255,0.8);font-weight:500}
+.email-icon{width:36px;height:36px;border-radius:8px;background:rgba(26,170,145,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.email-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.email-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.35);min-width:120px;padding-top:2px}
+.email-val{font-size:13px;color:rgba(255,255,255,0.85);line-height:1.5}
+.tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500}
+.tag-teal{background:rgba(26,170,145,0.2);color:var(--teal-mid)}
+.tag-blue{background:rgba(26,110,154,0.2);color:#5ab4e8}
+.tag-orange{background:rgba(255,107,53,0.15);color:#ff9b6e}
+.email-ai{background:rgba(26,170,145,0.08);border:1px solid rgba(26,170,145,0.2);border-radius:10px;padding:12px;margin-top:0.5rem}
+.email-ai-label{font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--teal-mid);font-weight:600;margin-bottom:4px}
+.email-ai-text{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5}
+.new-badge{font-size:10px;padding:2px 8px;border-radius:100px;background:var(--accent);color:white;font-weight:600;margin-left:8px;vertical-align:middle}
+
+/* SECTIONS */
+section{padding:90px 2rem}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-label{font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--teal);margin-bottom:0.75rem}
+.section-title{font-family:'Instrument Serif',serif;font-size:clamp(28px,3.5vw,44px);font-weight:400;line-height:1.15;letter-spacing:-0.3px;color:var(--text);margin-bottom:1rem}
+.section-title em{font-style:italic;color:var(--teal)}
+.section-sub{font-size:17px;color:var(--muted);max-width:520px;font-weight:300;line-height:1.65}
+.section-header{margin-bottom:3.5rem}
+
+/* HOW IT WORKS */
+.how-bg{background:var(--off)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+.step{position:relative}
+.step-num{font-family:'Instrument Serif',serif;font-size:52px;color:var(--teal-light);font-weight:400;line-height:1;margin-bottom:1rem}
+.step h3{font-size:17px;font-weight:500;margin-bottom:0.5rem;color:var(--text)}
+.step p{font-size:14px;color:var(--muted);line-height:1.6}
+.step-arrow{position:absolute;top:28px;right:-30px;color:var(--border);font-size:20px}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.feat-card{border:1px solid var(--border);border-radius:14px;padding:1.75rem;background:white;transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s}
+.feat-card:hover{border-color:var(--teal);transform:translateY(-3px);box-shadow:0 12px 32px rgba(10,124,107,0.08)}
+.feat-icon{width:44px;height:44px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:1rem}
+.feat-card h3{font-size:16px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.feat-card p{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* DASHBOARD DEMO */
+.demo-bg{background:var(--navy);color:white}
+.demo-bg .section-title{color:white}
+.demo-bg .section-sub{color:rgba(255,255,255,0.55)}
+.demo-window{background:#1a2e28;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-top:2.5rem}
+.demo-topbar{background:rgba(0,0,0,0.3);padding:12px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.demo-dot{width:10px;height:10px;border-radius:50%}
+.demo-title{font-size:13px;color:rgba(255,255,255,0.4);margin-left:8px}
+.demo-body{padding:1.5rem;display:grid;grid-template-columns:200px 1fr;gap:1.5rem}
+.demo-sidebar{border-right:1px solid rgba(255,255,255,0.06);padding-right:1.5rem}
+.demo-nav-item{font-size:13px;padding:8px 12px;border-radius:8px;color:rgba(255,255,255,0.5);margin-bottom:4px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.demo-nav-item.active{background:rgba(26,170,145,0.15);color:var(--teal-mid)}
+.demo-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.demo-stat{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px}
+.demo-stat-label{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em}
+.demo-stat-val{font-size:22px;font-weight:500;color:white}
+.demo-stat-val.green{color:var(--teal-mid)}
+.demo-table{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden}
+.demo-th{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 100px;gap:8px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.3)}
+.demo-tr{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 100px;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;color:rgba(255,255,255,0.7);align-items:center;transition:background 0.15s}
+.demo-tr:hover{background:rgba(255,255,255,0.03)}
+.demo-tr:last-child{border-bottom:none}
+.status{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500}
+.s-done{background:rgba(26,170,145,0.15);color:var(--teal-mid)}
+.s-new{background:rgba(255,107,53,0.15);color:#ff9b6e}
+.s-pend{background:rgba(255,200,50,0.15);color:#ffc832}
+
+/* PRICING */
+.pricing-bg{background:var(--off)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+.plan-card{background:white;border:1px solid var(--border);border-radius:16px;padding:2rem;position:relative;transition:transform 0.2s,box-shadow 0.2s}
+.plan-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(10,124,107,0.1)}
+.plan-card.featured{border:2px solid var(--teal);background:var(--navy);color:white}
+.plan-pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--teal-mid);color:white;font-size:11px;font-weight:600;padding:4px 14px;border-radius:100px;white-space:nowrap}
+.plan-name{font-size:14px;font-weight:500;color:var(--muted);margin-bottom:8px}
+.plan-card.featured .plan-name{color:rgba(255,255,255,0.55)}
+.plan-price{font-family:'Instrument Serif',serif;font-size:46px;font-weight:400;line-height:1;margin-bottom:4px;color:var(--text)}
+.plan-card.featured .plan-price{color:white}
+.plan-per{font-size:14px;color:var(--muted);margin-bottom:1rem}
+.plan-card.featured .plan-per{color:rgba(255,255,255,0.4)}
+.plan-vol{font-size:13px;font-weight:500;color:var(--teal);background:var(--teal-light);padding:5px 12px;border-radius:100px;display:inline-block;margin-bottom:1.25rem}
+.plan-card.featured .plan-vol{background:rgba(26,170,145,0.15);color:var(--teal-mid)}
+.plan-features{list-style:none;margin-bottom:1.75rem}
+.plan-features li{font-size:14px;color:var(--slate);padding:6px 0;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.plan-card.featured .plan-features li{color:rgba(255,255,255,0.65);border-color:rgba(255,255,255,0.08)}
+.plan-features li::before{content:'✓';color:var(--teal-mid);font-weight:600;font-size:13px;flex-shrink:0}
+.plan-btn{width:100%;padding:12px;border-radius:100px;font-size:15px;font-weight:500;cursor:pointer;border:1.5px solid var(--teal);background:transparent;color:var(--teal);transition:all 0.2s}
+.plan-btn:hover{background:var(--teal);color:white}
+.plan-card.featured .plan-btn{background:var(--teal-mid);color:white;border-color:var(--teal-mid)}
+.plan-card.featured .plan-btn:hover{background:var(--teal);border-color:var(--teal)}
+.pricing-note{text-align:center;margin-top:1.5rem;font-size:13px;color:var(--muted)}
+
+/* TESTIMONIALS */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.testi-card{border:1px solid var(--border);border-radius:14px;padding:1.75rem;background:white}
+.testi-stars{color:#fbbf24;font-size:14px;margin-bottom:0.75rem}
+.testi-text{font-size:14px;color:var(--slate);line-height:1.7;font-style:italic;margin-bottom:1rem}
+.testi-author{display:flex;align-items:center;gap:10px}
+.testi-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.testi-name{font-size:14px;font-weight:500}
+.testi-role{font-size:12px;color:var(--muted)}
+
+/* CONTACT */
+.contact-bg{background:var(--off)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
+.contact-info h3{font-size:20px;font-weight:500;margin-bottom:0.5rem}
+.contact-info p{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:1.5rem}
+.contact-item{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.contact-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.contact-item a{font-size:15px;color:var(--teal);font-weight:500}
+.contact-form{background:white;border:1px solid var(--border);border-radius:16px;padding:2rem}
+.form-group{margin-bottom:1.25rem}
+.form-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);background:white;transition:border-color 0.2s;outline:none}
+.form-input:focus{border-color:var(--teal)}
+.form-textarea{resize:vertical;min-height:110px}
+.form-submit{width:100%;padding:12px;background:var(--teal);color:white;border:none;border-radius:100px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;transition:background 0.2s}
+.form-submit:hover{background:var(--teal-dark)}
+
+/* CTA BANNER */
+.cta-section{background:var(--navy);color:white;text-align:center;padding:100px 2rem}
+.cta-section h2{font-family:'Instrument Serif',serif;font-size:clamp(32px,4vw,52px);font-weight:400;margin-bottom:1rem;letter-spacing:-0.5px}
+.cta-section h2 em{font-style:italic;color:var(--teal-mid)}
+.cta-section p{font-size:17px;color:rgba(255,255,255,0.55);margin-bottom:2rem;font-weight:300}
+
+/* FOOTER */
+footer{background:#060e0c;color:rgba(255,255,255,0.55);padding:60px 2rem 30px}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
+.footer-logo{font-family:'Instrument Serif',serif;font-size:24px;color:white;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px}
+.footer-desc{font-size:13px;line-height:1.7;max-width:280px}
+.footer-col h4{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.8);margin-bottom:1rem}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:8px;transition:color 0.2s}
+.footer-col a:hover{color:var(--teal-mid)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.07);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-bottom p{font-size:12px}
+.footer-legal{display:flex;gap:20px}
+.footer-legal a{font-size:12px;color:rgba(255,255,255,0.4);transition:color 0.2s}
+.footer-legal a:hover{color:var(--teal-mid)}
+
+/* MODAL (legal pages) */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding:40px 1rem;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:16px;max-width:720px;width:100%;padding:2.5rem;position:relative;max-height:80vh;overflow-y:auto}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:20px;cursor:pointer;color:var(--slate);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.modal-close:hover{background:var(--off)}
+.modal h2{font-family:'Instrument Serif',serif;font-size:28px;margin-bottom:0.5rem}
+.modal-date{font-size:13px;color:var(--muted);margin-bottom:1.5rem}
+.modal h3{font-size:16px;font-weight:600;margin:1.5rem 0 0.5rem;color:var(--text)}
+.modal p{font-size:14px;color:var(--slate);line-height:1.7;margin-bottom:0.75rem}
+.modal ul{padding-left:1.25rem;margin-bottom:0.75rem}
+.modal ul li{font-size:14px;color:var(--slate);line-height:1.7;margin-bottom:4px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .steps{grid-template-columns:1fr}
+  .step-arrow{display:none}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .pricing-grid{grid-template-columns:1fr}
+  .testi-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+  .demo-body{grid-template-columns:1fr}
+  .demo-sidebar{display:none}
+  .demo-stats{grid-template-columns:1fr 1fr}
+  .demo-th,.demo-tr{grid-template-columns:1fr 1fr 1fr;font-size:12px}
+  .demo-th>*:nth-child(4),.demo-tr>*:nth-child(4){display:none}
+  .nav-links{display:none}
+  .nav-mobile{display:flex}
+}
+@media(max-width:600px){
+  .features-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr}
+  .demo-stats{grid-template-columns:1fr 1fr}
+}
+
+/* SCROLL ANIMATIONS */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:none}
+.reveal-delay-1{transition-delay:0.1s}
+.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}
+
+/* TYPING ANIMATION */
+.typed-cursor{display:inline-block;width:2px;height:1em;background:var(--teal-mid);margin-left:2px;vertical-align:middle;animation:blink 0.9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 </style>
 </head>
 <body>
 
-<!-- ─── NAV ─── -->
-<nav>
-  <a class="nav-logo" href="#home">
-    <div class="nav-logo-icon">🎙</div>
-    VoiceCare Pro
-  </a>
-  <ul class="nav-links">
-    <li><a onclick="scrollTo('how')">How It Works</a></li>
-    <li><a onclick="scrollTo('features')">Features</a></li>
-    <li><a onclick="scrollTo('pricing')">Pricing</a></li>
-    <li><a onclick="scrollTo('contact')">Contact</a></li>
-    <li><a href="/login" class="nav-login">Log In</a></li>
-    <li><a href="/signup" class="nav-signup">Sign Up</a></li>
-    <li><a href="/cdn-cgi/l/email-protection#5b282e2b2b34292f1b3c3e2f2d3432383e383a293e2b293475383436" class="nav-cta">Get Started</a></li>
-  </ul>
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#0a7c6b" stroke-width="1.5"/><path d="M8 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#1aaa91" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="16" r="3" fill="#1aaa91"/><path d="M11 19h6" stroke="#1aaa91" stroke-width="1.5" stroke-linecap="round"/></svg>
+      VoiceCare Pro
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#contact">Contact</a>
+      <a href="#pricing" class="nav-cta">Start free trial</a>
+    </div>
+    <div class="nav-mobile" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
 </nav>
-<!-- ─── HERO ─── -->
-<section id="home">
-  <div class="hero-glow"></div>
-  <div class="hero-grid-bg"></div>
-  <div style="max-width:1200px;margin:0 auto;width:100%;position:relative;z-index:1;">
-    <div class="hero-content" style="margin:0 auto;">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Built for U.S. Healthcare Clinics &amp; Hospitals
-      </div>
-      <h1 class="hero-h1">
-        Your voicemails,<br><em>triaged by AI</em><br>in seconds.
-      </h1>
-      <p class="hero-sub">
-        VoiceCare Pro listens to every voicemail so your staff doesn't have to. Get instant AI summaries, caller details, department routing, and recommended actions — delivered straight to your inbox.
-      </p>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <div class="hero-orb hero-orb1"></div>
+    <div class="hero-orb hero-orb2"></div>
+    <div class="hero-grid"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">Built for US Healthcare Clinics</div>
+      <h1>Stop listening to<br>voicemails.<br><em>Start acting on them.</em></h1>
+      <p class="hero-sub">VoiceCare Pro uses AI to instantly triage, summarize, and route clinic voicemails — so your staff spends time on patients, not message playback.</p>
       <div class="hero-actions">
-        <a href="/cdn-cgi/l/email-protection#0b787e7b7b64797f4b6c6e7f7d6462686e686a796e7b796425686466" class="btn-primary">
-          Start Free Trial →
-        </a>
-        <a onclick="scrollTo('how')" class="btn-ghost">See How It Works</a>
+        <a href="#pricing" class="btn-primary">Start free trial →</a>
+        <a href="#how" class="btn-outline">See how it works</a>
+      </div>
+      <div class="hero-trust">
+        <span>No credit card required</span>
+        <span class="trust-divider"></span>
+        <span>HIPAA-friendly setup</span>
+        <span class="trust-divider"></span>
+        <span>Works with any softphone</span>
       </div>
     </div>
-
-    <div class="hero-demo">
-      <p class="demo-label">Live AI Summary Example</p>
-      <div class="demo-card">
-        <div class="demo-header">
-          <span class="demo-title">Voicemail Processed · Just Now</span>
-          <span class="demo-status"><span class="badge-dot"></span> Completed</span>
-        </div>
-        <div class="demo-rows">
-          <div class="demo-row">
-            <span class="demo-key">Patient Name</span>
-            <span class="demo-val">Joseph Cramer</span>
-          </div>
-          <div class="demo-divider"></div>
-          <div class="demo-row">
-            <span class="demo-key">Caller Phone</span>
-            <span class="demo-val">+1 (703) 123-3456</span>
-          </div>
-          <div class="demo-row">
-            <span class="demo-key">Call Back At</span>
-            <span class="demo-val">+1 (713) 123-3456</span>
-          </div>
-          <div class="demo-divider"></div>
-          <div class="demo-row">
-            <span class="demo-key">AI Summary</span>
-            <span class="demo-val">Patient wants to schedule an appointment with their doctor.</span>
-          </div>
-          <div class="demo-row">
-            <span class="demo-key">Department</span>
-            <span class="demo-val highlight">Front Desk</span>
-          </div>
-          <div class="demo-row">
-            <span class="demo-key">Recommended</span>
-            <span class="demo-val highlight">Call back Joseph Cramer to schedule an appointment with Dr.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── HOW IT WORKS ─── -->
-<section id="how">
-  <div style="max-width:1200px;margin:0 auto;">
-    <div class="centered reveal">
-      <p class="section-label">How It Works</p>
-      <h2 class="section-h2">From voicemail to action in 3 steps.</h2>
-      <p class="section-sub">No new hardware. No workflow disruption. Your softphone stays exactly the same.</p>
-    </div>
-    <div class="steps-grid reveal">
-      <div class="step-card">
-        <div class="step-num">01</div>
-        <div class="step-icon">📲</div>
-        <h3 class="step-h3">Forward Your Voicemails</h3>
-        <p class="step-p">We give your clinic a unique email address like <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="07646b6e696e64476a666e6b2960627371686e6462646675627775682964686a">[email&#160;protected]</a></span>. Set your RingCentral or any softphone to forward voicemails there — done.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-icon">🤖</div>
-        <div class="step-num">02</div>
-        <h3 class="step-h3">AI Triages Instantly</h3>
-        <p class="step-p">Our AI listens to the audio, extracts the caller's name, call-back number, intent, and department — stripping away everything irrelevant in seconds.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-icon">📧</div>
-        <div class="step-num">03</div>
-        <h3 class="step-h3">Your Staff Gets the Summary</h3>
-        <p class="step-p">A clean, structured email is sent from <span style="color:var(--teal);font-family:monospace;font-size:0.8rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4dadbc0ddd2ddd7d5c0dddbdac7f4d3d1c0c2dbddd7d1d7d5c6d1c4c6db9ad7dbd9">[email&#160;protected]</a></span> with exactly what's needed — no audio file, no reading transcripts.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-icon">📊</div>
-        <div class="step-num">04</div>
-        <h3 class="step-h3">Track &amp; Manage in Dashboard</h3>
-        <p class="step-p">View all voicemails, filter by department, listen to original audio, read full transcripts, and track status — all in one place.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── FEATURES ─── -->
-<section id="features" style="max-width:1200px;margin:0 auto;padding:100px 60px;">
-  <div class="reveal">
-    <p class="section-label">Features</p>
-    <h2 class="section-h2">Everything clinical staff actually need.</h2>
-    <p class="section-sub">Built specifically for the pace and complexity of healthcare front-desk operations.</p>
-  </div>
-
-  <div class="features-layout reveal" style="margin-top:70px;">
-    <div>
-      <ul class="feature-list">
-        <li class="feature-item">
-          <div class="feature-icon">🎯</div>
-          <div class="feature-text">
-            <h4>Intent Extraction</h4>
-            <p>AI identifies the core reason for the call — appointment request, billing inquiry, prescription, and more — filtering out all filler conversation.</p>
-          </div>
-        </li>
-        <li class="feature-item">
-          <div class="feature-icon">📞</div>
-          <div class="feature-text">
-            <h4>Dual Phone Capture</h4>
-            <p>Automatically captures both the caller ID number and any callback number the patient mentions verbally during the voicemail.</p>
-          </div>
-        </li>
-        <li class="feature-item">
-          <div class="feature-icon">🏥</div>
-          <div class="feature-text">
-            <h4>Department Routing</h4>
-            <p>AI detects and suggests the correct department — Front Desk, Billing, Nursing, Lab — so the right team gets notified immediately.</p>
-          </div>
-        </li>
-        <li class="feature-item">
-          <div class="feature-icon">⚡</div>
-          <div class="feature-text">
-            <h4>Recommended Action</h4>
-            <p>Don't just tell staff what was said — tell them exactly what to do next, with the callback number included in the action prompt.</p>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div class="feature-visual">
-      <div class="email-preview">
+    <div class="hero-visual">
+      <div class="email-card">
         <div class="email-header">
-          <div class="email-dots">
-            <div class="email-dot"></div>
-            <div class="email-dot"></div>
-            <div class="email-dot"></div>
+          <div class="email-icon">📬</div>
+          <div class="email-from">
+            <strong>New voicemail notification</strong>
+            notifications@getvoicecarepro.com
           </div>
-          <span class="email-from"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ddb3b2a9b4bbb4bebca9b4b2b3ae9dbab8a9abb2b4beb8bebcafb8adafb2f3beb2b0">[email&#160;protected]</a></span>
         </div>
-        <div class="email-body">
-          <div class="email-subject">📬 New Voicemail Triage — Front Desk</div>
-          <div class="email-field">
-            <span class="email-field-key">Patient Name</span>
-            <span class="email-field-val">Joseph Cramer</span>
-          </div>
-          <div class="email-field">
-            <span class="email-field-key">Caller Phone</span>
-            <span class="email-field-val">+1 (703) 123-3456</span>
-          </div>
-          <div class="email-field">
-            <span class="email-field-key">Call Back</span>
-            <span class="email-field-val">+1 (713) 123-3456</span>
-          </div>
-          <div class="email-field">
-            <span class="email-field-key">AI Summary</span>
-            <span class="email-field-val">Patient wants to schedule an appointment with their doctor.</span>
-          </div>
-          <div class="email-field">
-            <span class="email-field-key">Department</span>
-            <span class="email-field-val em">Front Desk</span>
-          </div>
-          <div class="email-field">
-            <span class="email-field-key">Recommended</span>
-            <span class="email-field-val em">Call back Joseph Cramer to schedule an appt with Dr at (713) 123-3456.</span>
-          </div>
+        <div class="email-row">
+          <span class="email-label">Patient Name</span>
+          <span class="email-val">Joseph Cramer</span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">Caller Phone</span>
+          <span class="email-val">703-123-3456</span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">Call Back</span>
+          <span class="email-val">713-123-3456</span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">Department</span>
+          <span class="email-val"><span class="tag tag-teal">Front Desk</span></span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">Status</span>
+          <span class="email-val"><span class="tag tag-orange">New <span class="new-badge">!</span></span></span>
+        </div>
+        <div class="email-ai">
+          <div class="email-ai-label">✦ AI Summary</div>
+          <div class="email-ai-text">Patient left a voicemail to schedule an appointment with Dr. Call back Joseph Cramer at 713-123-3456.</div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="features-layout reverse reveal" style="margin-top:80px;">
-    <div class="feature-visual">
-      <div style="padding:8px 0;">
-        <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:20px;">Analytics Dashboard</div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.85rem;color:var(--muted);">Voicemails This Week</span>
-            <span style="font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--teal);">142</span>
-          </div>
-          <div style="height:1px;background:var(--border);"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="background:rgba(0,191,166,0.1);border:1px solid rgba(0,191,166,0.2);border-radius:6px;padding:5px 12px;font-size:0.78rem;color:var(--teal);">Front Desk · 58</span>
-            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:0.78rem;color:var(--muted);">Billing · 34</span>
-            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:0.78rem;color:var(--muted);">Nursing · 29</span>
-            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:0.78rem;color:var(--muted);">Lab · 21</span>
-          </div>
-          <div style="height:1px;background:var(--border);"></div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
-              <span style="color:var(--muted);">Completed</span><span style="color:#4ade80;">128 ✓</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
-              <span style="color:var(--muted);">Pending</span><span style="color:#fbbf24;">11 ⏳</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
-              <span style="color:var(--muted);">Failed</span><span style="color:#f87171;">3 ✗</span>
-            </div>
-          </div>
-          <div style="height:1px;background:var(--border);"></div>
-          <div style="font-size:0.82rem;color:var(--teal);">⏱ ~4.2 hrs of staff listening time saved this week</div>
-        </div>
-      </div>
-    </div>
-    <div>
-      <p class="section-label">Dashboard &amp; Analytics</p>
-      <h3 style="font-family:'Instrument Serif',serif;font-size:2rem;line-height:1.2;margin-bottom:16px;">See the hours you're saving, in real time.</h3>
-      <p style="color:var(--muted);font-size:0.95rem;line-height:1.7;margin-bottom:28px;font-weight:300;">Your clinic dashboard gives a complete view of every voicemail, its status, and the time saved — so you can measure ROI from day one.</p>
-      <ul class="feature-list">
-        <li class="feature-item">
-          <div class="feature-icon">🔍</div>
-          <div class="feature-text">
-            <h4>Filter by Department</h4>
-            <p>Instantly surface only the voicemails relevant to your role — billing, nursing, front desk, and more.</p>
-          </div>
-        </li>
-        <li class="feature-item">
-          <div class="feature-icon">📈</div>
-          <div class="feature-text">
-            <h4>Weekly Time Saved</h4>
-            <p>VoiceCare Pro calculates how much listening and reading time your team has saved — a measurable ROI metric.</p>
-          </div>
-        </li>
-      </ul>
     </div>
   </div>
 </section>
 
-<!-- ─── PROOF ─── -->
-<section id="proof">
-  <div style="max-width:1200px;margin:0 auto;">
-    <div class="centered reveal">
-      <p class="section-label">Why Clinics Switch</p>
-      <h2 class="section-h2">Less noise. More action.</h2>
-      <p class="section-sub">Healthcare teams spend hours every week just listening to voicemails. VoiceCare Pro gives that time back.</p>
+<!-- HOW IT WORKS -->
+<section class="how-bg" id="how">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Three steps to <em>zero voicemail backlogs</em></h2>
+      <p class="section-sub">VoiceCare Pro plugs into your existing softphone in minutes — no hardware changes, no IT project.</p>
     </div>
-    <div class="stats-row reveal">
-      <div class="stat-box">
-        <div class="stat-num">~4 hrs</div>
-        <div class="stat-label">average staff time saved per week, per clinic</div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <h3>Forward your voicemails</h3>
+        <p>Your clinic gets a unique email address like <code style="font-size:12px;background:#e6f4f1;padding:2px 6px;border-radius:4px;color:var(--teal-dark)">np1psy@mail.getvoicecarepro.com</code>. Configure your softphone (RingCentral, VoIP, etc.) to forward audio files there.</p>
+        <span class="step-arrow">→</span>
       </div>
-      <div class="stat-box">
-        <div class="stat-num">&lt;10s</div>
-        <div class="stat-label">time from voicemail received to AI summary delivered</div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num">02</div>
+        <h3>AI does the heavy lifting</h3>
+        <p>Our AI transcribes the audio, extracts the patient name, callback number, determines the right department, and writes a clear recommended action — in seconds.</p>
+        <span class="step-arrow">→</span>
       </div>
-      <div class="stat-box">
-        <div class="stat-num">100%</div>
-        <div class="stat-label">voicemails triaged — no message falls through the cracks</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num">0</div>
-        <div class="stat-label">changes needed to your existing phone system setup</div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num">03</div>
+        <h3>Act, don't listen</h3>
+        <p>Your staff receives a clean email summary for every voicemail, plus a full dashboard to track status, filter by department, and monitor analytics.</p>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="testimonials-grid reveal">
-      <div class="testimonial-card">
-        <p class="testimonial-quote">"We used to spend 2 hours a day just going through voicemails. Now our front desk gets a clean email and knows exactly who to call back. It's been a game-changer."</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">👩‍⚕️</div>
-          <div>
-            <div class="author-name">Dr. Sarah Mitchell</div>
-            <div class="author-role">Office Manager · Family Practice, Virginia</div>
-          </div>
-        </div>
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything your clinic <em>actually needs</em></h2>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon">🎙️</div>
+        <h3>AI Voicemail Summaries</h3>
+        <p>No more listening to full messages. AI extracts the key intent — appointment requests, billing questions, prescription follow-ups — in one line.</p>
       </div>
-      <div class="testimonial-card">
-        <p class="testimonial-quote">"The billing department filter alone was worth it. Our billing team now only sees the voicemails relevant to them — no more sorting through 50 messages."</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">👨‍💼</div>
-          <div>
-            <div class="author-name">James Okoye</div>
-            <div class="author-role">Billing Director · Multi-site Clinic, Texas</div>
-          </div>
-        </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">📞</div>
+        <h3>Auto Callback Extraction</h3>
+        <p>Captures both the caller's number and any callback number mentioned in the message, side by side — ready to dial.</p>
       </div>
-      <div class="testimonial-card">
-        <p class="testimonial-quote">"Setup took under 10 minutes. We just forwarded our RingCentral voicemails to the address they gave us. The first summary hit our inbox within seconds."</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">👩‍💻</div>
-          <div>
-            <div class="author-name">Priya Nair</div>
-            <div class="author-role">IT Coordinator · Urgent Care Center, WA</div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">🏥</div>
+        <h3>Smart Department Routing</h3>
+        <p>AI identifies whether the message belongs to Front Desk, Billing, Nursing, or other departments — automatically.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">✅</div>
+        <h3>Recommended Actions</h3>
+        <p>Each voicemail comes with a plain-language action: "Call back Jane at CVS regarding prescription #4421." No interpretation needed.</p>
+      </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">📊</div>
+        <h3>Analytics Dashboard</h3>
+        <p>See weekly volume, resolution rates, and per-department trends. Know exactly how many patient contacts your team handles.</p>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">📧</div>
+        <h3>Instant Email Delivery</h3>
+        <p>Every voicemail fires a structured email from <em>notifications@getvoicecarepro.com</em> to your staff — no app to open, no delays.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD DEMO -->
+<section class="demo-bg" id="dashboard">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center">
+      <div class="section-label" style="color:var(--teal-mid)">Product proof</div>
+      <h2 class="section-title" style="color:white">Your team's command center</h2>
+      <p class="section-sub" style="margin:0 auto;text-align:center">Real-time voicemail tracking, filtering, and analytics — all in one clean dashboard.</p>
+    </div>
+    <div class="demo-window reveal">
+      <div class="demo-topbar">
+        <div class="demo-dot" style="background:#ff5f57"></div>
+        <div class="demo-dot" style="background:#ffbe2e"></div>
+        <div class="demo-dot" style="background:#28c840"></div>
+        <span class="demo-title">VoiceCare Pro — Dashboard</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-sidebar">
+          <div class="demo-nav-item active">📋 All Voicemails</div>
+          <div class="demo-nav-item">🏥 Front Desk</div>
+          <div class="demo-nav-item">💳 Billing</div>
+          <div class="demo-nav-item">💊 Nursing</div>
+          <div class="demo-nav-item">📊 Analytics</div>
+          <div class="demo-nav-item">⚙️ Settings</div>
+        </div>
+        <div class="demo-main">
+          <div class="demo-stats">
+            <div class="demo-stat"><div class="demo-stat-label">This week</div><div class="demo-stat-val green">47</div></div>
+            <div class="demo-stat"><div class="demo-stat-label">Resolved</div><div class="demo-stat-val">38</div></div>
+            <div class="demo-stat"><div class="demo-stat-label">Pending</div><div class="demo-stat-val" style="color:#ffc832">6</div></div>
+            <div class="demo-stat"><div class="demo-stat-label">Avg handle time</div><div class="demo-stat-val green">2m</div></div>
+          </div>
+          <div class="demo-table">
+            <div class="demo-th"><span>Patient</span><span>Department</span><span>Summary</span><span>Received</span><span>Status</span></div>
+            <div class="demo-tr"><span>Joseph Cramer</span><span>Front Desk</span><span>Appt w/ Dr. Kim</span><span>9:14 AM</span><span><span class="status s-done">Resolved</span></span></div>
+            <div class="demo-tr"><span>Maria Santos</span><span>Billing</span><span>Insurance claim Q</span><span>9:32 AM</span><span><span class="status s-new">New</span></span></div>
+            <div class="demo-tr"><span>CVS Pharmacy</span><span>Nursing</span><span>Prescription clarif.</span><span>10:05 AM</span><span><span class="status s-pend">Pending</span></span></div>
+            <div class="demo-tr"><span>David Lee</span><span>Front Desk</span><span>Reschedule appt</span><span>10:18 AM</span><span><span class="status s-done">Resolved</span></span></div>
           </div>
         </div>
       </div>
@@ -1352,418 +461,341 @@
   </div>
 </section>
 
-<!-- ─── PRICING ─── -->
-<section id="pricing">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div class="centered reveal">
-      <p class="section-label">Pricing</p>
-      <h2 class="section-h2">Simple, transparent pricing.</h2>
-      <p class="section-sub">No contracts. No setup fees. Pay monthly and cancel any time.</p>
+<!-- PRICING -->
+<section class="pricing-bg" id="pricing">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title" style="text-align:center">Simple, transparent <em>pricing</em></h2>
+      <p class="section-sub" style="margin:0 auto;text-align:center">No hidden fees. No setup costs. Cancel anytime.</p>
     </div>
-
-    <div class="pricing-grid reveal">
-      <!-- Starter -->
-      <div class="pricing-card">
-        <div class="pricing-name">Starter</div>
-        <div class="pricing-price">
-          <span class="pricing-amount">$74</span>
-          <span class="pricing-period">/mo</span>
-        </div>
-        <div class="pricing-volume">300 voicemails / month</div>
-        <div class="pricing-divider"></div>
-        <ul class="pricing-features">
-          <li>AI summaries &amp; intent extraction</li>
-          <li>Caller &amp; callback number capture</li>
-          <li>Email notifications per voicemail</li>
+    <div class="pricing-grid">
+      <div class="plan-card reveal">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$74</div>
+        <div class="plan-per">per month</div>
+        <div class="plan-vol">300 voicemails / mo</div>
+        <ul class="plan-features">
+          <li>AI summaries & transcriptions</li>
+          <li>Auto callback extraction</li>
+          <li>Email notifications</li>
           <li>Department routing</li>
-          <li>Clinic dashboard access</li>
-          <li>1 unique forwarding address</li>
+          <li>Basic dashboard</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#f2818782829d8086b2959786849d9b91979193809782809ddc919d9fcd81879098979186cfa1869380869780d2a29e939cd2bb9c83879b808b" class="btn-pricing btn-pricing-ghost">Get Started</a>
+        <button class="plan-btn" onclick="window.location.href='#contact'">Get started</button>
       </div>
-
-      <!-- Plus (featured) -->
-      <div class="pricing-card featured">
-        <div class="pricing-name">Plus</div>
-        <div class="pricing-price">
-          <span class="pricing-amount">$119</span>
-          <span class="pricing-period">/mo</span>
-        </div>
-        <div class="pricing-volume">500 voicemails / month</div>
-        <div class="pricing-divider"></div>
-        <ul class="pricing-features">
+      <div class="plan-card featured reveal reveal-delay-1">
+        <div class="plan-pop">Most popular</div>
+        <div class="plan-name">Plus</div>
+        <div class="plan-price">$119</div>
+        <div class="plan-per">per month</div>
+        <div class="plan-vol">500 voicemails / mo</div>
+        <ul class="plan-features">
           <li>Everything in Starter</li>
-          <li>Recommended action suggestions</li>
-          <li>Analytics &amp; time-saved reporting</li>
-          <li>Full transcript access in dashboard</li>
-          <li>Audio playback in dashboard</li>
+          <li>Analytics dashboard</li>
+          <li>Recommended actions</li>
+          <li>Department filters</li>
           <li>Priority email support</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#c2b1b7b2b2adb0b682a5a7b6b4adaba1a7a1a3b0a7b2b0adeca1adaffdb1b7a0a8a7a1b6ff92aeb7b1e292aea3ace28bacb3b7abb0bb" class="btn-pricing btn-pricing-primary">Get Started</a>
+        <button class="plan-btn" onclick="window.location.href='#contact'">Start free trial</button>
       </div>
-
-      <!-- Pro -->
-      <div class="pricing-card">
-        <div class="pricing-name">Pro</div>
-        <div class="pricing-price">
-          <span class="pricing-amount">$199</span>
-          <span class="pricing-period">/mo</span>
-        </div>
-        <div class="pricing-volume">Unlimited voicemails</div>
-        <div class="pricing-divider"></div>
-        <ul class="pricing-features">
+      <div class="plan-card reveal reveal-delay-2">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$199</div>
+        <div class="plan-per">per month</div>
+        <div class="plan-vol">Unlimited voicemails</div>
+        <ul class="plan-features">
           <li>Everything in Plus</li>
           <li>Unlimited voicemails</li>
-          <li>Multiple clinic locations</li>
-          <li>Multiple forwarding addresses</li>
-          <li>Advanced filtering &amp; search</li>
-          <li>Dedicated onboarding support</li>
+          <li>Multi-location support</li>
+          <li>Advanced analytics</li>
+          <li>Dedicated support</li>
         </ul>
-        <a href="/cdn-cgi/l/email-protection#5a292f2a2a35282e1a3d3f2e2c3533393f393b283f2a28357439353765292f38303f392e670a28357a0a363b347a13342b2f332823" class="btn-pricing btn-pricing-ghost">Get Started</a>
+        <button class="plan-btn" onclick="window.location.href='#contact'">Get started</button>
       </div>
     </div>
-
-    <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin-top:24px;">
-      Questions about which plan fits your clinic? <a href="/cdn-cgi/l/email-protection#ddaea8adadb2afa99dbab8a9abb2b4beb8bebcafb8adafb2f3beb2b0" style="color:var(--teal);">Email us</a> and we'll help you choose.
-    </p>
+    <p class="pricing-note">All plans include a 14-day free trial. No credit card required. Questions? Email <a href="mailto:support@getvoicecarepro.com" style="color:var(--teal)">support@getvoicecarepro.com</a></p>
   </div>
 </section>
 
-<!-- ─── CONTACT ─── -->
-<section id="contact">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div class="reveal">
-      <p class="section-label">Contact</p>
-      <h2 class="section-h2">We're here to help.</h2>
-      <p class="section-sub">Questions about setup, HIPAA compliance, or which plan fits your clinic? Reach out — real humans respond.</p>
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center">
+      <div class="section-label">Social proof</div>
+      <h2 class="section-title" style="text-align:center">Clinics that <em>love it</em></h2>
     </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Our front desk used to spend 45 minutes every morning going through voicemails. VoiceCare Pro cut that to under 5. It's genuinely changed how we start the day."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:#e6f4f1;color:#065a4d">SR</div>
+          <div><div class="testi-name">Sarah R.</div><div class="testi-role">Practice Manager, Family Medicine Clinic</div></div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The department routing alone is worth it. Billing voicemails no longer end up at the front desk. Setup took literally 10 minutes — just forwarded our softphone email."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:#e6f1fb;color:#0c447c">JM</div>
+          <div><div class="testi-name">James M.</div><div class="testi-role">Operations Director, Multi-Specialty Group</div></div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Patients were falling through the cracks because callbacks were missed. Now every voicemail has a clear action item with a name and number. Nothing slips anymore."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:#faeeda;color:#633806">LP</div>
+          <div><div class="testi-name">Laura P.</div><div class="testi-role">Clinic Administrator, Behavioral Health</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <div class="contact-layout reveal">
+<!-- CONTACT -->
+<section class="contact-bg" id="contact">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Contact</div>
+      <h2 class="section-title">Get in <em>touch</em></h2>
+    </div>
+    <div class="contact-grid">
       <div class="contact-info">
+        <h3>We're here to help</h3>
+        <p>Whether you're evaluating VoiceCare Pro for your clinic, need a demo, or have a billing question — reach out and we'll respond within one business day.</p>
         <div class="contact-item">
           <div class="contact-icon">📧</div>
-          <div class="contact-detail">
-            <h4>General Support</h4>
-            <a href="/cdn-cgi/l/email-protection#30434540405f424470575544465f5953555351425540425f1e535f5d"><span class="__cf_email__" data-cfemail="fe8d8b8e8e918c8abe999b8a8891979d9b9d9f8c9b8e8c91d09d9193">[email&#160;protected]</span></a>
-          </div>
+          <div><div style="font-size:13px;color:var(--muted);margin-bottom:2px">General support</div><a href="mailto:support@getvoicecarepro.com">support@getvoicecarepro.com</a></div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">💼</div>
-          <div class="contact-detail">
-            <h4>Sales &amp; Onboarding</h4>
-            <a href="/cdn-cgi/l/email-protection#2f424e41466f484a5b5940464c4a4c4e5d4a5f5d40014c4042"><span class="__cf_email__" data-cfemail="1479757a7d54737160627b7d77717775667164667b3a777b79">[email&#160;protected]</span></a>
-          </div>
+          <div><div style="font-size:13px;color:var(--muted);margin-bottom:2px">Sales & partnerships</div><a href="mailto:mani@getvoicecarepro.com">mani@getvoicecarepro.com</a></div>
         </div>
-        <div class="contact-item">
-          <div class="contact-icon">⏱</div>
-          <div class="contact-detail">
-            <h4>Response Time</h4>
-            <p>We typically respond within 1 business day.</p>
-          </div>
-        </div>
-        <div class="contact-item">
-          <div class="contact-icon">🔒</div>
-          <div class="contact-detail">
-            <h4>HIPAA &amp; Compliance Questions</h4>
-            <a href="/cdn-cgi/l/email-protection#e99a9c9999869b9da98e8c9d9f86808a8c8a889b8c999b86c78a8684"><span class="__cf_email__" data-cfemail="11626461617e636551767465677e7872747270637461637e3f727e7c">[email&#160;protected]</span></a>
-          </div>
+        <div style="margin-top:1.5rem;padding:1.25rem;background:var(--teal-light);border-radius:12px;border-left:3px solid var(--teal)">
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px;color:var(--teal-dark)">Works with your existing setup</div>
+          <div style="font-size:13px;color:var(--slate)">Compatible with RingCentral, 8x8, Vonage, and any softphone that supports voicemail forwarding via email.</div>
         </div>
       </div>
-
-      <form class="contact-form" onsubmit="handleContact(event)">
+      <div class="contact-form reveal">
+        <h3 style="font-size:18px;font-weight:500;margin-bottom:1.25rem">Send us a message</h3>
         <div class="form-group">
-          <label class="form-label">Your Name</label>
-          <input class="form-input" type="text" placeholder="Jane Smith" id="c-name">
+          <label class="form-label">Your name</label>
+          <input class="form-input" type="text" placeholder="Dr. Jane Smith">
         </div>
         <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input class="form-input" type="email" placeholder="jane@yourclinic.com" id="c-email">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" placeholder="you@yourclinic.com">
         </div>
         <div class="form-group">
           <label class="form-label">Message</label>
-          <textarea class="form-textarea" rows="5" placeholder="Tell us about your clinic and what you're looking for..." id="c-msg"></textarea>
+          <textarea class="form-input form-textarea" placeholder="Tell us about your clinic and what you're looking for..."></textarea>
         </div>
-        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Send Message</button>
-      </form>
+        <button class="form-submit" onclick="alert('Thank you! We\'ll be in touch within one business day.')">Send message →</button>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ─── FOOTER ─── -->
+<!-- CTA BANNER -->
+<section class="cta-section">
+  <div style="max-width:640px;margin:0 auto">
+    <h2>Your staff's time is<br><em>too valuable</em> to waste on voicemails.</h2>
+    <p>Start your 14-day free trial today. No credit card, no commitment.</p>
+    <a href="#pricing" class="btn-primary" style="font-size:16px;padding:14px 36px">Get started free →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer>
   <div class="footer-inner">
-    <div class="footer-brand">
-      <a class="footer-logo" href="#home">
-        <div class="nav-logo-icon" style="width:30px;height:30px;font-size:14px;">🎙</div>
-        VoiceCare Pro
-      </a>
-      <p class="footer-desc">AI-powered voicemail triage for U.S. healthcare clinics, hospitals, and medical facilities. Built to give clinical staff their time back.</p>
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">
+          <svg viewBox="0 0 28 28" fill="none" width="24" height="24"><circle cx="14" cy="14" r="13" stroke="#1aaa91" stroke-width="1.5"/><path d="M8 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#1aaa91" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="16" r="3" fill="#1aaa91"/><path d="M11 19h6" stroke="#1aaa91" stroke-width="1.5" stroke-linecap="round"/></svg>
+          VoiceCare Pro
+        </div>
+        <p class="footer-desc">AI-powered voicemail triage for US healthcare clinics, hospitals, and medical facilities. Reduce staff burden. Improve patient response times.</p>
+        <div style="margin-top:1rem;font-size:12px;color:rgba(255,255,255,0.3)">getvoicecarepro.com</div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#contact">Contact us</a>
+        <a href="mailto:support@getvoicecarepro.com">Support</a>
+        <a href="mailto:mani@getvoicecarepro.com">Sales</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#" onclick="openModal('privacy')">Privacy Policy</a>
+        <a href="#" onclick="openModal('terms')">Terms of Service</a>
+        <a href="#" onclick="openModal('hipaa')">HIPAA Notice</a>
+        <a href="#" onclick="openModal('refund')">Refund Policy</a>
+      </div>
     </div>
-    <div class="footer-col">
-      <h5>Product</h5>
-      <ul>
-        <li><a onclick="scrollTo('how')">How It Works</a></li>
-        <li><a onclick="scrollTo('features')">Features</a></li>
-        <li><a onclick="scrollTo('pricing')">Pricing</a></li>
-        <li><a onclick="scrollTo('contact')">Contact</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Contact</h5>
-      <ul>
-        <li><a href="/cdn-cgi/l/email-protection#e1929491918e9395a1868495978e8882848280938491938ecf828e8c"><span class="__cf_email__" data-cfemail="40333530302f323400272534362f2923252321322530322f6e232f2d">[email&#160;protected]</span></a></li>
-        <li><a href="/cdn-cgi/l/email-protection#a1ccc0cfc8e1c6c4d5d7cec8c2c4c2c0d3c4d1d3ce8fc2cecc"><span class="__cf_email__" data-cfemail="d5b8b4bbbc95b2b0a1a3babcb6b0b6b4a7b0a5a7bafbb6bab8">[email&#160;protected]</span></a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Legal</h5>
-      <ul>
-        <li><a onclick="openPage('privacy')">Privacy Policy</a></li>
-        <li><a onclick="openPage('terms')">Terms of Service</a></li>
-        <li><a onclick="openPage('hipaa')">HIPAA Notice</a></li>
-        <li><a onclick="openPage('refund')">Refund Policy</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p class="footer-copy">© 2025 VoiceCare Pro. All rights reserved.</p>
-    <div class="footer-legal">
-      <a onclick="openPage('privacy')">Privacy Policy</a>
-      <a onclick="openPage('terms')">Terms of Service</a>
-      <a onclick="openPage('hipaa')">HIPAA Notice</a>
+    <div class="footer-bottom">
+      <p>© 2025 VoiceCare Pro. All rights reserved.</p>
+      <div class="footer-legal">
+        <a href="#" onclick="openModal('privacy')">Privacy</a>
+        <a href="#" onclick="openModal('terms')">Terms</a>
+        <a href="#" onclick="openModal('hipaa')">HIPAA</a>
+      </div>
     </div>
   </div>
 </footer>
 
-<!-- ─── LEGAL OVERLAYS ─── -->
-
-<!-- Privacy Policy -->
-<div class="page-overlay" id="page-privacy">
-  <button class="page-close" onclick="closePage('privacy')">✕</button>
-  <div class="page-inner">
-    <p class="section-label">Legal</p>
-    <h1 class="page-h1">Privacy Policy</h1>
-    <p class="page-meta">Last updated: January 1, 2025 &nbsp;|&nbsp; Effective: January 1, 2025</p>
-    <div class="legal-section">
-      <h2>1. Introduction</h2>
-      <p>VoiceCare Pro ("we," "us," or "our") is committed to protecting the privacy and security of the information entrusted to us by our customers. This Privacy Policy describes how we collect, use, disclose, and safeguard information when you use our voicemail triage platform at getvoicecarepro.com and related services (collectively, the "Service").</p>
-    </div>
-    <div class="legal-section">
-      <h2>2. Information We Collect</h2>
-      <p>We collect the following categories of information:</p>
-      <ul>
-        <li><strong>Account Information:</strong> Name, email address, clinic name, and billing information provided at registration.</li>
-        <li><strong>Voicemail Data:</strong> Audio files and transcriptions forwarded to your unique VoiceCare Pro email address by your clinic's phone system.</li>
-        <li><strong>AI-Generated Data:</strong> Summaries, extracted phone numbers, department classifications, and recommended actions generated from voicemail content.</li>
-        <li><strong>Usage Data:</strong> Log files, IP addresses, browser type, pages visited, and interaction data collected automatically.</li>
-        <li><strong>Communications:</strong> Emails or messages you send to our support team.</li>
-      </ul>
-    </div>
-    <div class="legal-section">
-      <h2>3. How We Use Your Information</h2>
-      <p>We use your information to provide, operate, and improve the Service; deliver AI-generated voicemail summaries via email; generate analytics and reporting within your dashboard; respond to support inquiries; process billing; and comply with legal obligations.</p>
-    </div>
-    <div class="legal-section">
-      <h2>4. HIPAA and Healthcare Data</h2>
-      <p>VoiceCare Pro processes voicemail data on behalf of healthcare providers. If your use of the Service involves Protected Health Information (PHI) as defined under the Health Insurance Portability and Accountability Act (HIPAA), we operate as a Business Associate. A Business Associate Agreement (BAA) is available upon request for eligible customers. We implement administrative, physical, and technical safeguards appropriate to the sensitivity of healthcare data.</p>
-    </div>
-    <div class="legal-section">
-      <h2>5. Data Sharing and Disclosure</h2>
-      <p>We do not sell your data. We may share data with: (a) service providers who assist in operating the Service under confidentiality obligations; (b) law enforcement when required by law; (c) successors in a merger or acquisition, with prior notice to you.</p>
-    </div>
-    <div class="legal-section">
-      <h2>6. Data Retention</h2>
-      <p>Voicemail data is retained for the duration of your active subscription and for up to 90 days following termination, after which it is securely deleted. You may request earlier deletion by contacting <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="51222421213e232511363425273e3832343230233421233e7f323e3c">[email&#160;protected]</a>.</p>
-    </div>
-    <div class="legal-section">
-      <h2>7. Security</h2>
-      <p>We use industry-standard encryption in transit (TLS) and at rest, access controls, and regular security reviews. No method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.</p>
-    </div>
-    <div class="legal-section">
-      <h2>8. Your Rights</h2>
-      <p>Depending on your jurisdiction, you may have rights to access, correct, delete, or port your personal data. To exercise any of these rights, contact us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f4878184849b8680b4939180829b9d97919795869184869bda979b99">[email&#160;protected]</a>.</p>
-    </div>
-    <div class="legal-section">
-      <h2>9. Changes to This Policy</h2>
-      <p>We may update this Privacy Policy from time to time. We will notify you of material changes via email or a prominent notice on the website at least 14 days before the changes take effect.</p>
-    </div>
-    <div class="legal-section">
-      <h2>10. Contact Us</h2>
-      <p>If you have questions about this Privacy Policy, please contact us at <a href="/cdn-cgi/l/email-protection#40333530302f323400272534362f2923252321322530322f6e232f2d" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="a3d0d6d3d3ccd1d7e3c4c6d7d5cccac0c6c0c2d1c6d3d1cc8dc0ccce">[email&#160;protected]</span></a>.</p>
-    </div>
+<!-- LEGAL MODALS -->
+<div class="modal-overlay" id="modal-privacy">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('privacy')">✕</button>
+    <h2>Privacy Policy</h2>
+    <p class="modal-date">Effective date: January 1, 2025</p>
+    <h3>1. Information We Collect</h3>
+    <p>VoiceCare Pro ("we," "us," or "our") collects information you provide when you sign up for our service, including your name, email address, clinic name, and billing details. We also process voicemail audio files and transcriptions forwarded to your unique clinic email address for the sole purpose of providing our AI triage service.</p>
+    <h3>2. How We Use Your Information</h3>
+    <p>We use collected information to operate and improve VoiceCare Pro, send you service notifications, respond to support requests, and process payments. We do not sell your information to third parties.</p>
+    <h3>3. Patient Data</h3>
+    <p>Voicemail content forwarded to VoiceCare Pro may contain protected health information (PHI). We process this data solely to deliver AI summaries to authorized clinic staff. Audio files and transcriptions are retained for a limited period to support dashboard functionality and are deleted in accordance with our data retention schedule.</p>
+    <h3>4. Data Security</h3>
+    <p>We implement industry-standard security measures including encryption in transit (TLS) and at rest. Access to voicemail data is restricted to authorized personnel and automated processing systems only.</p>
+    <h3>5. Data Retention</h3>
+    <p>Voicemail data is retained for 90 days from receipt unless your plan specifies otherwise. Account data is retained for the duration of your subscription plus 30 days after cancellation.</p>
+    <h3>6. Your Rights</h3>
+    <p>You may request access to, correction of, or deletion of your data at any time by contacting support@getvoicecarepro.com. We will respond within 30 days.</p>
+    <h3>7. Contact</h3>
+    <p>For privacy-related questions, email support@getvoicecarepro.com.</p>
   </div>
 </div>
 
-<!-- Terms of Service -->
-<div class="page-overlay" id="page-terms">
-  <button class="page-close" onclick="closePage('terms')">✕</button>
-  <div class="page-inner">
-    <p class="section-label">Legal</p>
-    <h1 class="page-h1">Terms of Service</h1>
-    <p class="page-meta">Last updated: January 1, 2025 &nbsp;|&nbsp; Effective: January 1, 2025</p>
-    <div class="legal-section">
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using VoiceCare Pro ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. These Terms apply to all users, including individual subscribers and organizations.</p>
-    </div>
-    <div class="legal-section">
-      <h2>2. Description of Service</h2>
-      <p>VoiceCare Pro provides an AI-powered voicemail triage platform designed for healthcare organizations. The Service processes voicemail audio and transcriptions to generate structured summaries, caller data, department classifications, and recommended actions delivered by email and accessible via a web dashboard.</p>
-    </div>
-    <div class="legal-section">
-      <h2>3. Eligibility and Account Registration</h2>
-      <p>You must be at least 18 years old and authorized to bind your organization to these Terms to create an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
-    </div>
-    <div class="legal-section">
-      <h2>4. Acceptable Use</h2>
-      <p>You agree to use the Service only for lawful purposes and in compliance with all applicable federal and state laws, including HIPAA. You must not: (a) use the Service to process data you are not authorized to handle; (b) attempt to reverse-engineer or exploit the platform; (c) misrepresent the AI-generated output as medical advice or clinical decisions; (d) share your unique forwarding address publicly.</p>
-    </div>
-    <div class="legal-section">
-      <h2>5. Subscription and Billing</h2>
-      <p>Subscriptions are billed monthly in advance. Your subscription will automatically renew unless cancelled before the renewal date. We reserve the right to change pricing with 30 days' notice. Fees are non-refundable except as described in our Refund Policy. Voicemail overages beyond your plan limit may result in suspension or upsell prompts.</p>
-    </div>
-    <div class="legal-section">
-      <h2>6. AI-Generated Content Disclaimer</h2>
-      <p>AI-generated summaries, department suggestions, and recommended actions are provided for informational and operational efficiency purposes only. They do not constitute medical advice, clinical guidance, or legal advice. Your staff retains full responsibility for patient care decisions. You should verify critical patient information before taking action.</p>
-    </div>
-    <div class="legal-section">
-      <h2>7. Limitation of Liability</h2>
-      <p>To the fullest extent permitted by law, VoiceCare Pro shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the Service. Our total cumulative liability shall not exceed the fees paid by you in the three (3) months preceding the claim.</p>
-    </div>
-    <div class="legal-section">
-      <h2>8. Termination</h2>
-      <p>Either party may terminate the subscription at any time. Upon termination, your access to the Service will cease at the end of the current billing period. We may suspend or terminate accounts that violate these Terms immediately and without notice.</p>
-    </div>
-    <div class="legal-section">
-      <h2>9. Governing Law</h2>
-      <p>These Terms shall be governed by the laws of the State of Virginia, without regard to its conflict of law provisions. Any disputes shall be resolved in the courts of Virginia.</p>
-    </div>
-    <div class="legal-section">
-      <h2>10. Contact</h2>
-      <p>For legal inquiries: <a href="/cdn-cgi/l/email-protection#9be8eeebebf4e9efdbfcfeefedf4f2f8fef8fae9feebe9f4b5f8f4f6" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="e2919792928d9096a2858796948d8b81878183908792908dcc818d8f">[email&#160;protected]</span></a></p>
-    </div>
+<div class="modal-overlay" id="modal-terms">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('terms')">✕</button>
+    <h2>Terms of Service</h2>
+    <p class="modal-date">Effective date: January 1, 2025</p>
+    <h3>1. Acceptance of Terms</h3>
+    <p>By accessing or using VoiceCare Pro, you agree to be bound by these Terms of Service. If you do not agree, do not use our service.</p>
+    <h3>2. Description of Service</h3>
+    <p>VoiceCare Pro provides an AI-powered voicemail triage platform for healthcare clinics. The service receives forwarded voicemails, generates AI summaries, extracts key information, and delivers structured notifications to authorized users.</p>
+    <h3>3. Acceptable Use</h3>
+    <p>You may use VoiceCare Pro only for lawful purposes in connection with your healthcare facility's operations. You may not use the service to process voicemails unrelated to legitimate patient or clinical communications, attempt to reverse-engineer the platform, or share access credentials with unauthorized parties.</p>
+    <h3>4. Subscription and Billing</h3>
+    <p>Subscriptions are billed monthly in advance. Your plan includes a set number of voicemail processings per month. Voicemails processed above your plan limit may result in service interruption until the next billing cycle. We reserve the right to change pricing with 30 days written notice.</p>
+    <h3>5. No Medical Advice</h3>
+    <p>VoiceCare Pro is a communication management tool. AI summaries and recommended actions are informational only and do not constitute medical advice. Clinical staff are responsible for all patient care decisions.</p>
+    <h3>6. Limitation of Liability</h3>
+    <p>To the maximum extent permitted by law, VoiceCare Pro shall not be liable for indirect, incidental, or consequential damages arising from use of the service. Our total liability shall not exceed the fees paid by you in the 3 months preceding the claim.</p>
+    <h3>7. Termination</h3>
+    <p>Either party may terminate the subscription at any time. Upon termination, your access will end at the close of the current billing period. Data deletion requests will be honored within 30 days.</p>
+    <h3>8. Governing Law</h3>
+    <p>These terms are governed by the laws of the United States. Disputes shall be resolved by binding arbitration.</p>
+    <h3>9. Contact</h3>
+    <p>Questions about these terms? Email support@getvoicecarepro.com.</p>
   </div>
 </div>
 
-<!-- HIPAA Notice -->
-<div class="page-overlay" id="page-hipaa">
-  <button class="page-close" onclick="closePage('hipaa')">✕</button>
-  <div class="page-inner">
-    <p class="section-label">Legal</p>
-    <h1 class="page-h1">HIPAA Compliance Notice</h1>
-    <p class="page-meta">Last updated: January 1, 2025</p>
-    <div class="legal-section">
-      <h2>Our Role Under HIPAA</h2>
-      <p>VoiceCare Pro recognizes that healthcare providers using our platform may transmit voicemails containing Protected Health Information (PHI) as defined under the Health Insurance Portability and Accountability Act of 1996 (HIPAA) and its implementing regulations. In such cases, VoiceCare Pro acts as a Business Associate to your Covered Entity.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Business Associate Agreement (BAA)</h2>
-      <p>A Business Associate Agreement is available to all VoiceCare Pro customers whose use of the Service involves PHI. To request a BAA, contact us at <a href="/cdn-cgi/l/email-protection#e0939590908f9294a0878594968f8983858381928590928fce838f8d" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="cebdbbbebea1bcba8ea9abbab8a1a7adabadafbcabbebca1e0ada1a3">[email&#160;protected]</span></a>. You should not use VoiceCare Pro to process PHI until a BAA is executed between your organization and VoiceCare Pro.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Safeguards We Implement</h2>
-      <ul>
-        <li>Encryption in transit (TLS 1.2+) for all data transmissions</li>
-        <li>Encryption at rest for stored voicemail audio and transcriptions</li>
-        <li>Role-based access controls limiting staff access to relevant data</li>
-        <li>Audit logs for data access and system events</li>
-        <li>Automatic data deletion protocols following account termination</li>
-        <li>Employee training on data privacy and security</li>
-      </ul>
-    </div>
-    <div class="legal-section">
-      <h2>Minimum Necessary Standard</h2>
-      <p>VoiceCare Pro's AI is designed to extract only the minimum information necessary to produce actionable summaries. We do not store or transmit PHI beyond what is required to deliver the Service.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Breach Notification</h2>
-      <p>In the event of a discovered breach of unsecured PHI, VoiceCare Pro will notify affected Covered Entities in accordance with the HIPAA Breach Notification Rule (45 CFR Part 164, Subpart D) within the timeframes required by law.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Contact for Compliance Questions</h2>
-      <p>For HIPAA-related inquiries: <a href="/cdn-cgi/l/email-protection#cbb8bebbbba4b9bf8bacaebfbda4a2a8aea8aab9aebbb9a4e5a8a4a6" style="color:var(--teal);"><span class="__cf_email__" data-cfemail="23505653534c515763444657554c4a40464042514653514c0d404c4e">[email&#160;protected]</span></a></p>
-    </div>
+<div class="modal-overlay" id="modal-hipaa">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('hipaa')">✕</button>
+    <h2>HIPAA Notice</h2>
+    <p class="modal-date">Effective date: January 1, 2025</p>
+    <h3>Business Associate Agreement (BAA)</h3>
+    <p>VoiceCare Pro operates as a Business Associate under HIPAA where applicable. Covered entities (clinics, hospitals, and medical facilities) using our service to process voicemails containing Protected Health Information (PHI) are encouraged to execute a Business Associate Agreement with us before going live. Please contact mani@getvoicecarepro.com to request a BAA.</p>
+    <h3>How We Handle PHI</h3>
+    <ul>
+      <li>PHI contained in forwarded voicemails is used solely to generate AI summaries and deliver notifications to authorized clinic staff</li>
+      <li>PHI is not disclosed to third parties except as required to provide the contracted service</li>
+      <li>We employ administrative, physical, and technical safeguards to protect PHI</li>
+      <li>PHI is retained for no longer than necessary and deleted per agreed retention schedules</li>
+    </ul>
+    <h3>Your Responsibilities</h3>
+    <p>Clinics are responsible for ensuring their use of VoiceCare Pro complies with applicable HIPAA regulations, including obtaining any necessary patient authorizations and ensuring only authorized staff have access to the dashboard and email notifications.</p>
+    <h3>Contact</h3>
+    <p>For HIPAA-related inquiries or to request a BAA, contact mani@getvoicecarepro.com.</p>
   </div>
 </div>
 
-<!-- Refund Policy -->
-<div class="page-overlay" id="page-refund">
-  <button class="page-close" onclick="closePage('refund')">✕</button>
-  <div class="page-inner">
-    <p class="section-label">Legal</p>
-    <h1 class="page-h1">Refund Policy</h1>
-    <p class="page-meta">Last updated: January 1, 2025</p>
-    <div class="legal-section">
-      <h2>Monthly Subscriptions</h2>
-      <p>All monthly subscription fees are non-refundable. If you cancel your subscription, you will retain access to the Service until the end of your current billing period. No partial-month refunds will be issued.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Exceptions</h2>
-      <p>We will issue a full refund for the most recent billing period if: (a) you experienced a material Service outage lasting more than 48 consecutive hours that was caused by VoiceCare Pro and was not due to circumstances beyond our control; or (b) you were charged incorrectly due to a billing error on our part. Refund requests must be submitted within 14 days of the charge in question.</p>
-    </div>
-    <div class="legal-section">
-      <h2>Free Trial</h2>
-      <p>If a free trial is offered, you will not be charged until the trial period ends. You may cancel before the trial ends to avoid any charges.</p>
-    </div>
-    <div class="legal-section">
-      <h2>How to Request a Refund</h2>
-      <p>To request a refund, email <a href="mailto:support@getvoicecarepro.com" style="color:var(--teal);">support@getvoicecarepro.com</a> with your account email, the charge date, and the reason for your request. We will review and respond within 5 business days.</p>
-    </div>
+<div class="modal-overlay" id="modal-refund">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('refund')">✕</button>
+    <h2>Refund Policy</h2>
+    <p class="modal-date">Effective date: January 1, 2025</p>
+    <h3>Free Trial</h3>
+    <p>All plans include a 14-day free trial. You will not be charged until the trial period ends. You may cancel at any time during the trial at no cost.</p>
+    <h3>Monthly Subscriptions</h3>
+    <p>Monthly subscriptions may be cancelled at any time. Upon cancellation, you retain access through the end of the current billing period. We do not offer prorated refunds for unused days within a billing cycle.</p>
+    <h3>Exceptions</h3>
+    <p>If you experience a material service failure attributable to VoiceCare Pro within the first 30 days of a paid subscription, please contact support@getvoicecarepro.com. We will review your case and may offer a full or partial refund at our discretion.</p>
+    <h3>Contact</h3>
+    <p>Refund requests: support@getvoicecarepro.com.</p>
   </div>
 </div>
 
-<!-- ─── SCRIPTS ─── -->
 <script>
-  // Smooth scroll
-  function scrollTo(id) {
-    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-  }
+// SCROLL ANIMATIONS
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
 
-  // Legal overlays
-  function openPage(id) {
-    document.getElementById('page-' + id).classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
+// NAV SCROLL SHADOW
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none';
+});
 
-  function closePage(id) {
-    document.getElementById('page-' + id).classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  // Scroll reveal
-  const reveals = document.querySelectorAll('.reveal, .feature-item');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        const delay = el.classList.contains('feature-item')
-          ? (Array.from(el.parentNode.children).indexOf(el) * 100)
-          : 0;
-        setTimeout(() => el.classList.add('visible'), delay);
-        observer.unobserve(el);
-      }
-    });
-  }, { threshold: 0.15 });
-
-  reveals.forEach(el => observer.observe(el));
-
-  // Contact form
-  function handleContact(e) {
-    e.preventDefault();
-    const name = document.getElementById('c-name').value;
-    const email = document.getElementById('c-email').value;
-    const msg = document.getElementById('c-msg').value;
-    window.location.href = `mailto:support@getvoicecarepro.com?subject=Inquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent(msg + '\n\nReply to: ' + email)}`;
-  }
-
-  // Nav shrink on scroll
-  window.addEventListener('scroll', () => {
-    const nav = document.querySelector('nav');
-    if (window.scrollY > 60) {
-      nav.style.padding = '14px 60px';
-    } else {
-      nav.style.padding = '20px 60px';
+// MODAL
+function openModal(id) {
+  event.preventDefault();
+  document.getElementById('modal-' + id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay) {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
     }
   });
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => {
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  }
+});
+
+// MOBILE MENU (simple toggle)
+function toggleMenu() {
+  const links = document.querySelector('.nav-links');
+  if(links.style.display === 'flex') {
+    links.style.display = 'none';
+  } else {
+    links.style.display = 'flex';
+    links.style.flexDirection = 'column';
+    links.style.position = 'fixed';
+    links.style.top = '64px';
+    links.style.left = '0';
+    links.style.right = '0';
+    links.style.background = 'white';
+    links.style.padding = '1.5rem 2rem';
+    links.style.borderBottom = '1px solid #d4e0dd';
+    links.style.zIndex = '99';
+    links.style.gap = '18px';
+  }
+}
 </script>
 </body>
 </html>
