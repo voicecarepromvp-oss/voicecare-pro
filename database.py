@@ -36,7 +36,9 @@ class Clinic(db.Model):
     ingest_email_token = db.Column(db.String(64), unique=True, nullable=False)
 
     plan_name = db.Column(db.String(50), default="starter")
-    monthly_voicemail_limit = db.Column(db.Integer, default=300)
+    subscription_status = db.Column(db.String(50), default="inactive")
+    
+    monthly_voicemail_limit = db.Column(db.Integer, nullable=True)
     monthly_voicemail_used = db.Column(db.Integer, default=0)
 
     billing_cycle_start = db.Column(db.DateTime, default=datetime.utcnow)
@@ -145,7 +147,6 @@ class Voicemail(db.Model):
     recommended_action = db.Column(db.String(500), nullable=True)
     priority = db.Column(db.String(20), nullable=True)
 
-    retry_count = db.Column(db.Integer, default=0)
     last_error = db.Column(db.Text, nullable=True)
 
     # ============================================================
@@ -153,7 +154,7 @@ class Voicemail(db.Model):
     # ============================================================
 
     summary = db.Column(db.Text, nullable=True)
-    triage_category = db.Column(db.String(100), nullable=True)
+    triage_category = db.Column(db.Text, nullable=True)
     urgency_level = db.Column(db.String(50), nullable=True)
 
     # ============================================================
