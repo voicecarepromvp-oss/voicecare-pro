@@ -77,6 +77,18 @@ class User(db.Model, UserMixin):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # ============================================================
+    # 🔐 AUTH FEATURES (NEW - SAFE ADDITION)
+    # ============================================================
+
+    # Password Reset
+    reset_token = db.Column(db.String(255), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+
+    # Email Verification
+    is_verified = db.Column(db.Boolean, default=True)  # SAFE for existing users
+    verification_token = db.Column(db.String(255), nullable=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
