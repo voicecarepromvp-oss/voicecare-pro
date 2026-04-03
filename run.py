@@ -318,13 +318,22 @@ def signup():
         db.session.commit()
 
         # 2️⃣ Create Admin User
+        verification_token = secrets.token_urlsafe(32)
+
         user = User(
-            email=email,
-            clinic_id=clinic.id
+        email=email,
+        clinic_id=clinic.id,
+        verification_token=verification_token,
+        is_verified=False   # 🔴 IMPORTANT (only new users)
         )
         user.set_password(password)
+
         db.session.add(user)
         db.session.commit()
+        verify_link = url_for("verify_email", token=verification_token, _external=True)
+
+        # ⚠️ TEMP (same as reset password)
+        print(f"VERIFY LINK: {verify_link}")
 
         # 3️⃣ Log in the user
         login_user(user)
@@ -418,6 +427,63 @@ def login():
         login_user(user, remember=True)
         return redirect(url_for("dashboard"))
     return render_template("login.html")
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email")
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            token = secrets.token_urlsafe(32)
+
+            user.reset_token = token
+            user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+            db.session.commit()
+
+            reset_link = url_for("reset_password", token=token, _external=True)
+
+            # ⚠️ TEMP: print instead of email (safe testing)
+            print(f"RESET LINK: {reset_link}")
+
+        flash("If the email exists, a reset link has been sent.")
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    user = User.query.filter_by(reset_token=token).first()
+
+    if not user or not user.reset_token_expiry or user.reset_token_expiry < datetime.utcnow():
+        return "Invalid or expired token"
+
+    if request.method == "POST":
+        password = request.form.get("password")
+
+        user.set_password(password)
+        user.reset_token = None
+        user.reset_token_expiry = None
+
+        db.session.commit()
+
+        flash("Password updated successfully")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html")
+
+@app.route("/verify-email/<token>")
+def verify_email(token):
+    user = User.query.filter_by(verification_token=token).first()
+
+    if not user:
+        return "Invalid token"
+
+    user.is_verified = True
+    user.verification_token = None
+    db.session.commit()
+
+    return "Email verified successfully. You can now log in."
 
 @app.route("/logout")
 @login_required
