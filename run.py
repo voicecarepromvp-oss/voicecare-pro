@@ -332,8 +332,13 @@ def signup():
         db.session.commit()
         verify_link = url_for("verify_email", token=verification_token, _external=True)
 
-        # ⚠️ TEMP (same as reset password)
-        print(f"VERIFY LINK: {verify_link}")
+        from services.email_service import send_email
+        
+        send_email(
+            to=user.email,
+            subject="Verify Your VoiceCarePro Account",
+            body=f"Click the link below to verify your account:\n\n{verify_link}\n\nWelcome to VoiceCarePro!"
+        )
 
         # 3️⃣ Log in the user
         login_user(user)
@@ -443,8 +448,14 @@ def forgot_password():
 
             reset_link = url_for("reset_password", token=token, _external=True)
 
-            # ⚠️ TEMP: print instead of email (safe testing)
-            print(f"RESET LINK: {reset_link}")
+            from services.email_service import send_email  # import your actual email function
+
+            # Replace print with real email
+            send_email(
+                to=user.email,
+                subject="Reset Your VoiceCarePro Password",
+                body=f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
+            ) 
 
         flash("If the email exists, a reset link has been sent.")
         return redirect(url_for("login"))
