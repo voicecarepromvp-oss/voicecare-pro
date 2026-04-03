@@ -452,10 +452,10 @@ def forgot_password():
 
             # Replace print with real email
             send_email(
-                to=user.email,
-                subject="Reset Your VoiceCarePro Password",
-                body=f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
-            ) 
+                user.email,
+                "Reset Your VoiceCarePro Password",
+                f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
+            )
 
         flash("If the email exists, a reset link has been sent.")
         return redirect(url_for("login"))
