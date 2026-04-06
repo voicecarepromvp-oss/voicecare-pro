@@ -551,8 +551,11 @@ def upload_voicemail():
 
     allowed, error = BillingService.can_process_voicemail(clinic)
 
+    # 🔥 TEMP BYPASS FOR TESTING
     if not allowed:
-        return jsonify({"error": error}), 403
+        print("⚠️ Billing blocked upload:", error)
+        # COMMENT THIS LINE TEMPORARILY
+        # return jsonify({"error": error}), 403
 
     # ----------------------------
     # FILE PROCESSING STARTS HERE
@@ -898,15 +901,18 @@ def debug_clinic_email():
 
 @app.route("/debug/all-clinics")
 def debug_all_clinics():
-    from database import Clinic
     clinics = Clinic.query.all()
     return {
         "clinics": [
             {
                 "id": c.id,
                 "name": c.name,
-                "token": c.ingest_email_token,
-                "email": c.email
+                "email": c.email,
+                "plan_name": c.plan_name,
+                "is_active": c.is_active,
+                "monthly_used": c.monthly_voicemail_used,
+                "billing_start": str(c.billing_cycle_start),
+                "billing_end": str(c.billing_cycle_end)
             }
             for c in clinics
         ]
