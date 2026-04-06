@@ -918,6 +918,19 @@ def debug_all_clinics():
         ]
     }
 
+@app.route("/debug/fix-billing/<int:clinic_id>")
+def fix_billing(clinic_id):
+    clinic = Clinic.query.get_or_404(clinic_id)
+
+    clinic.billing_cycle_start = datetime.utcnow()
+    clinic.billing_cycle_end = datetime.utcnow() + timedelta(days=30)
+    clinic.monthly_voicemail_used = 0
+    clinic.is_active = True
+
+    db.session.commit()
+
+    return {"message": "Billing reset", "clinic_id": clinic.id}
+
 # ------------------------
 # SERVER START (RENDER FIX)
 # ------------------------
