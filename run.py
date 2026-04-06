@@ -451,10 +451,16 @@ def forgot_password():
             from services.email_service import send_email  # import your actual email function
 
             # Replace print with real email
+            from services.email_service import send_email
+
             send_email(
-                user.email,
-                "Reset Your VoiceCarePro Password",
-                f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
+                to_email=user.email,
+                subject="Reset Your VoiceCarePro Password",
+                html_content=f"""
+                    <p>Click the link below to reset your password:</p>
+                    <p><a href="{reset_link}">{reset_link}</a></p>
+                    <p>This link expires in 1 hour.</p>
+                """
             )
 
         flash("If the email exists, a reset link has been sent.")
